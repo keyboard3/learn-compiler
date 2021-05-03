@@ -1,5 +1,5 @@
 {
-  "name": "script-compiler",
+  "name": "super-tiny-interpreter",
   "version": "1.0.0",
   "scripts": {
     "test": "ts-node src/test.ts",

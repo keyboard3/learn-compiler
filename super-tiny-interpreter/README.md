@@ -1,6 +1,5 @@
-# script-compiler
-手写简易脚本语言
-解析执行基于ts
+# super-tiny-interpreter
+用js实现的超简单的解释器
 ## 前言
 ```
 npm i

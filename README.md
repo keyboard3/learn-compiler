@@ -1,10 +1,10 @@
 # learn-compiler
 学习编译器
 ## 计划
-- [x] 用js写简单的解释器super-tiny-interpreter-v1
+- [x] 用js写简单的解释器super-tiny-interpreter
   - 包含词法解析，语法解析，解析执行语法树
   - 仅支持赋值语句和算数表达式运算
-- [ ] 用js写简单的解释器super-tiny-interpreter-v2
+- [x] 用js写简单的解释器tiny-interpreter
   - 运行时支持函数调用栈，静态作用域
 - [ ] 基于acorn的parser用js实现一把完备的解释器
 - [ ] 用antlr生成js词法分析器和语法分析器以及解释器
