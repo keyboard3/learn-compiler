@@ -48,6 +48,8 @@ export enum ASTNodeType {
   Multiplicative = "Multiplicative",
   IntLiteral = "IntLiteral",
   Identifier = "Identifier",
+  Binary = "Binary",
+  Unary = "Unary"
 }
 
 export class ASTNode {

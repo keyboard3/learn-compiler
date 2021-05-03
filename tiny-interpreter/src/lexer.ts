@@ -1,4 +1,4 @@
-import { defineKeywords, K3_EOF, K3_Token, K3_TokenType as Token, OP_TYPE as OP, CharStream } from "./models";
+import { defineKeywords, K3_EOF, K3_Token, K3_TokenType as Token, CharStream } from "./models";
 
 /**
  * 词法分析器
@@ -22,28 +22,29 @@ export function tokenize(code: string): K3_Token[] {
       return;
     }
   }
+
   function matchNameAndKeyword() {
     if (isAlpha(ch) || ch === '_' || ch === '$') {
       do {
         ch = cs.appendToTokenBuf(ch);
       } while (isAlpha(ch) || ch === '_' || ch === '$')
-      // cs.unGetChar(ch);
       if (defineKeywords[cs.tokenBuf]) {
         captureToken(defineKeywords[cs.tokenBuf]);
       } else captureToken(Token.NAME);
     }
   }
+
   function clearEmpty() {
     if (!ch) ch = cs.getChar();
     while (isSpace(ch)) {
       if (ch == '\n') {
         //sourceNote
-        // captureToken(Token.EOF);
       }
       ch = cs.getChar();
     }
     if (ch == K3_EOF) captureToken(Token.EOF);
   }
+
   function matchNumber() {
     if (isDigit(ch) || (ch == '.' && isDigit(cs.peekChar()))) {
       let base = 10;
@@ -80,10 +81,10 @@ export function tokenize(code: string): K3_Token[] {
           }
         }
       }
-      // cs.unGetChar(ch);
       captureToken(Token.NUMBER);
     }
   }
+
   function matchString() {
     if (ch == '"' || ch == '\'') {
       const qc = ch;
@@ -96,12 +97,24 @@ export function tokenize(code: string): K3_Token[] {
         }
         if (ch === "\\") {
           switch (ch = cs.getChar()) {
-            case 'b': ch = '\b'; break;
-            case 'f': ch = '\f'; break;
-            case 'n': ch = '\n'; break;
-            case 'r': ch = '\r'; break;
-            case 't': ch = '\t'; break;
-            case 'v': ch = '\v'; break;
+            case 'b':
+              ch = '\b';
+              break;
+            case 'f':
+              ch = '\f';
+              break;
+            case 'n':
+              ch = '\n';
+              break;
+            case 'r':
+              ch = '\r';
+              break;
+            case 't':
+              ch = '\t';
+              break;
+            case 'v':
+              ch = '\v';
+              break;
             default:
               if (isDigit(ch) && ch < '8') {
                 //todo \7
@@ -112,7 +125,6 @@ export function tokenize(code: string): K3_Token[] {
               }
               break;
           }
-          // cs.appendToTokenBuf(ch);
         }
         ch = cs.appendToTokenBuf(ch);
       }
@@ -120,147 +132,140 @@ export function tokenize(code: string): K3_Token[] {
       captureToken(Token.STRING);
     }
   }
+
   function matchOther() {
     if (!ch) return;
     let tt;
     switch (ch) {
-      case '\n': tt = Token.EOL; break;
-      case ';': tt = Token.SEMI; break;
-      case '[': tt = Token.LB; break;
-      case ']': tt = Token.RB; break;
-      case '{': tt = Token.LC; break;
-      case '}': tt = Token.RC; break;
-      case '(': tt = Token.LP; break;
-      case ')': tt = Token.RP; break;
-      case ',': tt = Token.COMMA; break;
-      case '?': tt = Token.HOOK; break;
-      case ':': tt = Token.COLON; break;
-      case '.': tt = Token.DOT; break;
+      case '\n':
+        tt = Token.EOL;
+        break;
+      case ';':
+        tt = Token.SEMI;
+        break;
+      case '[':
+        tt = Token.LB;
+        break;
+      case ']':
+        tt = Token.RB;
+        break;
+      case '{':
+        tt = Token.LC;
+        break;
+      case '}':
+        tt = Token.RC;
+        break;
+      case '(':
+        tt = Token.LP;
+        break;
+      case ')':
+        tt = Token.RP;
+        break;
+      case ',':
+        tt = Token.COMMA;
+        break;
+      case '?':
+        tt = Token.HOOK;
+        break;
+      case ':':
+        tt = Token.COLON;
+        break;
+      case '.':
+        tt = Token.DOT;
+        break;
       case '|':
-        if (cs.matchChar('|')) tt = Token.OR;
-        else if (cs.matchChar('=')) {
-          cs.token.atom.op = OP.BITOR;
-          tt = Token.ASSIGN;
-        } else {
-          tt = Token.BITOR;
-        }
+        if (matchChar('|')) tt = Token.OR;
+        else if (matchChar('=')) tt = Token.ASSIGN;
+        else tt = Token.BITOR;
         break;
       case '^':
-        if (cs.matchChar('=')) {
-          cs.token.atom.op = OP.BITXOR;
-          tt = Token.ASSIGN;
-        } else {
-          tt = Token.BITXOR;
-        }
+        if (matchChar('=')) tt = Token.ASSIGN;
+        else tt = Token.BITXOR;
         break;
       case '&':
-        if (cs.matchChar('&')) tt = Token.AND;
-        else if (cs.matchChar('=')) {
-          cs.token.atom.op = OP.BITAND;
-          tt = Token.ASSIGN;
-        } else {
-          tt = Token.BITAND;
-        }
+        if (matchChar('&')) tt = Token.AND;
+        else if (matchChar('=')) tt = Token.ASSIGN;
+        else tt = Token.BITAND;
         break;
       case '=':
-        if (cs.matchChar(ch)) {
-          cs.token.atom.op = OP.EQ;
-          tt = Token.EQOP;
-        } else {
-          cs.token.atom.op = OP.NOP;
-          tt = Token.ASSIGN;
-        }
+        if (matchChar('=')) tt = Token.EQOP;
+        else tt = Token.ASSIGN;
         break;
       case '!':
-        if (cs.matchChar('=')) {
-          cs.token.atom.op = OP.NE;
-          tt = Token.EQOP;
-        } else {
-          cs.token.atom.op = OP.NOT;
-          tt = Token.UNARYOP;
-        }
+        if (matchChar('=')) tt = Token.EQOP;
+        else tt = Token.UNARYOP;
         break;
       case '<':
         /* XXX treat HTML begin-comment as comment-till-end-of-line */
-        if (cs.matchChar('!')) {
-          if (cs.matchChar('-')) {
-            if (cs.matchChar('-')) skipLine()
-            cs.unGetChar('-');
+        if (matchChar('!')) {
+          if (matchChar('-')) {
+            if (matchChar('-')) skipLine()
+            unGetChar('-');
           }
-          cs.unGetChar('!');
+          unGetChar('!');
         }
-        if (cs.matchChar(ch)) {
-          cs.token.atom.op = OP.LSH;
-          tt = cs.matchChar('=') ? Token.ASSIGN : Token.SHOP;
-        } else {
-          cs.token.atom.op = cs.matchChar('=') ? OP.LE : OP.LT;
-          tt = Token.RELOP;
-        }
+        if (matchChar('<')) {
+          tt = matchChar('=') ? Token.ASSIGN : Token.SHOP;
+        } else tt = Token.RELOP;
         break;
       case '>':
-        if (cs.matchChar(ch)) {
-          cs.token.atom.op = cs.matchChar(ch) ? OP.URSH : OP.RSH;
-          tt = cs.matchChar('=') ? Token.ASSIGN : Token.SHOP;
-        } else {
-          cs.token.atom.op = cs.matchChar('=') ? OP.GE : OP.GT;
-          tt = Token.RELOP;
-        }
+        if (matchChar('>')) {
+          tt = matchChar('=') ? Token.ASSIGN : Token.SHOP;
+        } else tt = Token.RELOP;
         break;
       case '*':
-        cs.token.atom.op = OP.MUL;
-        tt = cs.matchChar('=') ? Token.ASSIGN : Token.MULOP;
+        tt = matchChar('=') ? Token.ASSIGN : Token.MULOP;
         break;
       case '/':
-        if (cs.matchChar('/')) {
+        if (matchChar('/')) {
           skipLine();
           return;
         }
-        if (cs.matchChar('*')) {
-          while ((tt = cs.getChar()) != K3_EOF && !(ch as any == '*' && cs.matchChar('/'))) {
-            if (ch == '/' && cs.matchChar('*')) {
-              if (cs.matchChar('/')) return;
-              // ReporcsyntaxError(mc, cs, "nested comment");
+        if (matchChar('*')) {
+          while ((tt = cs.getChar()) != K3_EOF && !(ch as any == '*' && matchChar('/'))) {
+            if (ch == '/' && matchChar('*')) {
+              if (matchChar('/')) return;
             }
           }
           if (ch == K3_EOF) return;
-          // ReporcsyntaxError(mc, cs, "unterminated comment");
         }
-        cs.token.atom.op = OP.DIV;
-        tt = cs.matchChar('=') ? Token.ASSIGN : Token.MULOP;
+        tt = matchChar('=') ? Token.ASSIGN : Token.MULOP;
         break;
       case '%':
-        cs.token.atom.op = OP.MOD;
-        tt = cs.matchChar('=') ? Token.ASSIGN : Token.MULOP;
+        tt = matchChar('=') ? Token.ASSIGN : Token.MULOP;
         break;
       case '~':
-        cs.token.atom.op = OP.BITNOT;
         tt = Token.UNARYOP;
         break;
       case '+':
       case '-':
-        if (cs.matchChar('=')) {
-          cs.token.atom.op = (ch == '+') ? OP.ADD : OP.SUB;
-          tt = Token.ASSIGN;
-        } else if (cs.matchChar(ch)) {
-          cs.token.atom.op = (ch == '+') ? OP.INC : OP.DEC;
-          tt = Token.INCOP;
-        } else if (ch == '-') {
-          cs.token.atom.op = OP.NEG;
-          tt = Token.MINUS;
-        } else {
-          tt = Token.PLUS;
-        }
+        if (matchChar('=')) tt = Token.ASSIGN;
+        else if (matchChar('-')) tt = Token.INCOP;
+        else if (ch == '-') tt = Token.MINUS;
+        else tt = Token.PLUS;
         break;
-
       default:
-        // ReporcsyntaxError(mc, cs, "illegal character");
         return;
     }
     if (tt) {
       ch = cs.appendToTokenBuf(ch);
       captureToken(tt);
     }
+
+    function matchChar(char) {
+      let res = cs.matchChar(char);
+      if (res) {
+        ch = ch + char;
+      }
+      return res;
+    }
+
+    function unGetChar(char) {
+      cs.unGetChar(char);
+      ch = (ch as string).slice(0, ch.length - char.length);
+    }
   }
+
   function captureToken(type: Token) {
     cs.token = {
       ...cs.token,
@@ -272,14 +277,17 @@ export function tokenize(code: string): K3_Token[] {
     cs.token = new K3_Token();
   }
 }
+
 function isSpace(ch: string) {
   if (!ch) return false;
   return /\s/.test(ch);
 }
+
 function isAlpha(ch: string) {
   if (!ch) return false;
   return /[a-zA-Z]/.test(ch);
 }
+
 function isDigit(ch: string) {
   if (!ch) return false;
   return /[0-9]/.test(ch);

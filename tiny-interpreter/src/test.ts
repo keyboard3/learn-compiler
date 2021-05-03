@@ -37,11 +37,7 @@ import Script from "./script";
 
 const script = new Script();
 script.process(`
-var c=0;
-function add(a,b){
-  return a+b+c;
-}
-a=add(1,2);
-a=add(a,a)
-a=add(a,a)
+var a=2;
+var b=3;
+a = true&&false;
 `);

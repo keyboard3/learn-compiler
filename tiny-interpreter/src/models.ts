@@ -4,13 +4,13 @@ import { initGlobalScope } from "./api";
 export enum K3_TokenType {
   EOF,//文件末尾
   EOL, //行尾
-  SEMI,//语句末尾 ;
+  SEMI,//语句末尾 ;s
   LB, RB,//数组标识 []
   LC, RC,//块级标识 {}
   LP, RP,//函数声明和调用标识 ()
   COMMA,//数组或者多个声明标识 ,
   ASSIGN,//赋值符号 =,+=,-=
-  HOOK,//条件判断符号 ? 
+  HOOK,//条件判断符号 ?
   COLON,//三目符号中的:
   OR, AND,//逻辑符号||和&&
   BITOR, BITXOR, BITAND,//二进制运算|^&
@@ -45,6 +45,7 @@ export enum K3_TokenType {
   NEW,//new关键字 创建对象
   RESERVED, //保留关键字
 }
+
 export const defineKeywords = {
   "break": K3_TokenType.BREAK,
   "case": K3_TokenType.CASE,
@@ -104,77 +105,16 @@ export const defineKeywords = {
   "try": K3_TokenType.RESERVED,
   "volatile": K3_TokenType.RESERVED,
 };
-export enum OP_TYPE {
-  NOP = "nop",
-  PUSH = "push",
-  POP = "pop",
-  ENTER = "enter",
-  LEAVE = "leave",
-  RETURN = "return",
-  GOTO = "goto",
-  IFEQ = "ifeq",
-  IFNE = "ifne",
-  IN = "in",
-  DUP = "dup",
-  ASSIGN = "assign",
-  BITOR = "bitor",//"|",
-  BITXOR = "bitxor",//"^",
-  BITAND = "bitand",//"&",
-  EQ = "eq",//"==",
-  NE = "ne",//"!=",
-  LT = "lt",//"<",
-  LE = "le",//"<=",
-  GT = "gt",//">",
-  GE = "ge",//">=",
-  LSH = "lsh",//"<<",
-  RSH = "rsh",//">>",
-  URSH = "ursh",//">>>",
-  ADD = "add",//"+",
-  SUB = "sub",//"-",
-  MUL = "mul",//"*",
-  DIV = "div",//"/",
-  MOD = "mod",//"%",
-  NOT = "not",//"!",
-  BITNOT = "bitnot",//"~",
-  NEG = "neg",//"-",
-  NEW = "new",
-  TYPEOF = "typeof",
-  VOID = "void",
-  INC = "inc",//"++",
-  DEC = "dec",//"--",
-  MEMBER = "member",//".",
-  LMEMBER = "lmember",//".",
-  INDEX = "index",
-  LINDEX = "lindex",
-  CALL = "call",
-  NAME = "name",
-  NUMBER = "number",
-  STRING = "string",
-  ZERO = "zero",//"0",
-  ONE = "one",//"1",
-  NULL = "null",
-  THIS = "this",
-  FALSE = "false",
-  TRUE = "true",
-}
+
 export class K3_Token {
-  constructor() {
-    this.atom = {} as any;
-  }
   type: K3_TokenType;
   text: string
-  atom?: K3_Atom
 }
 
-export interface K3_Atom {
-  op: OP_TYPE;
-}
-export enum K3_ASTNodeType {
+export enum K3_ASTNode_Type {
   Program = "Program",
   AssignmentStmt = "AssignmentStmt",
   VarDeclaration = "VarDeclaration",
-  Additive = "Additive",
-  Multiplicative = "Multiplicative",
   NumberLiteral = "NumberLiteral",
   Identifier = "Identifier",
   Function = "Function",
@@ -184,21 +124,25 @@ export enum K3_ASTNodeType {
   Block = "Block",
   Return = "Return",
   Binary = "Binary",
+  Unary = "Unary",
+  Primary = "Primary",
   Call = "Call"
 }
 
 export class K3_ASTNode {
-  type: K3_ASTNodeType;
+  type: K3_ASTNode_Type;
   token: K3_Token;
+  prefix: boolean;//主要是为了区分自增符号的
   args: K3_Symbol[];//函数声明这个参数就是形参
   children: Array<K3_ASTNode>;
   parent: K3_ASTNode;
 
-  constructor(type: K3_ASTNodeType, token: K3_Token) {
+  constructor(type: K3_ASTNode_Type, token: K3_Token, prefix = false) {
     this.type = type;
     this.token = token;
     this.children = [];
     this.args = [];
+    this.prefix = prefix;
   }
 
   addChild(node: K3_ASTNode) {
@@ -218,6 +162,7 @@ export class K3_ASTNode {
     }
   }
 }
+
 export class K3_Context {
   constructor(script: K3_ASTNode, maxFrameSize: number) {
     this.script = this.ptr = script;
@@ -226,6 +171,7 @@ export class K3_Context {
     this.globalScope = globalScope;
     this.stack = new K3_Stack(maxFrameSize);
   }
+
   globalScope: K3_Scope;
   stack: K3_Stack;
   script: K3_ASTNode;
@@ -236,40 +182,48 @@ export class K3_Stack {
   maxFrameSize: number;
   frames: K3_StackFrame[];
   ptr: number;
+
   constructor(maxFrameSize: number) {
     this.maxFrameSize = maxFrameSize;
     this.frames = [];
     this.ptr = -1;
   }
+
   pushFrame(frame: K3_StackFrame) {
     if (this.frames.length + 1 >= this.maxFrameSize) throw Error("stack overflow")
     this.frames.push(frame);
     this.ptr++;
   }
+
   popFrame() {
     if (this.frames.length - 1 < 0) return;
     this.frames.pop();
     this.ptr--;
   }
 }
+
 export interface K3_StackFrame {
   scope: K3_Scope;
 }
+
 export class K3_Scope {
   constructor(parent: K3_Scope) {
     this.parent = parent;
     this.declareSymbols = new Map();
     this.declareFunctions = new Map();
   }
+
   parent: K3_Scope;
   declareSymbols: Map<string, K3_Symbol>;
   declareFunctions: Map<string, K3_Function>;
   callResult: any;
 }
+
 export interface K3_Symbol {
   value: any;
   type: K3_SymbolType;
 }
+
 export interface K3_Function {
   call?: (...any) => any;
   script?: K3_ASTNode;
@@ -283,6 +237,7 @@ export enum K3_SymbolType {
   SYM_VARIABLE,
   SYM_PROPERTY
 }
+
 export const K3_EOF = null;
 
 export class CharStream {
@@ -290,23 +245,27 @@ export class CharStream {
   tokenBuf: string;
   code: string;
   ptr: number;
+
   constructor(code: string) {
     this.code = code;
     this.ptr = 0;
     this.tokenBuf = "";
     this.token = new K3_Token();
   }
+
   getChar() {
     if (this.ptr >= this.code.length) return K3_EOF;
     const char = this.code[this.ptr];
     this.ptr++;
     return char;
   }
+
   peekChar() {
     const char = this.getChar();
     this.unGetChar(char);
     return char;
   }
+
   unGetChar(char: string) {
     //非空白字符，不回退。只回退有效字符
     if (char == K3_EOF) return;
@@ -315,12 +274,14 @@ export class CharStream {
     if (this.ptr - char.length <= 0) return;
     this.ptr = this.ptr - char.length;
   }
+
   matchChar(c: string) {
     const char = this.getChar();
     if (char === c) return true;
     this.unGetChar(c);
     return false;
   }
+
   appendToTokenBuf(char: string) {
     this.tokenBuf += char;
     return this.getChar();
@@ -331,21 +292,25 @@ export class TokenStream {
   node: K3_ASTNode;
   tokens: K3_Token[];
   ptr: number;
+
   constructor(tokens: K3_Token[]) {
     this.tokens = tokens;
     this.ptr = 0;
   }
+
   getToken(): K3_Token | null {
     if (this.ptr > this.tokens.length) return K3_EOF;
     const token = this.tokens[this.ptr];
     this.ptr++;
     return token;
   }
+
   unGetToken(token: K3_Token) {
     if (token == null) return;
     if (this.ptr - 1 < 0) return;
     this.ptr--;
   }
+
   peekToken(): K3_Token | null {
     const token = this.getToken();
     if (!token) return null;

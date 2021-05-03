@@ -1,12 +1,14 @@
 import { findFunScope, findSymbolScope } from "./api";
-import { K3_ASTNodeType, K3_Context, K3_Scope, K3_SymbolType, K3_TokenType as Token } from "./models";
+import { K3_ASTNode_Type, K3_Context, K3_Scope, K3_SymbolType } from "./models";
 import * as parser from "./parser";
+
 /**
  * 遍历AST,计算
  */
 export default class Script {
   static verbose: boolean = false;
   kc: K3_Context;
+
   constructor() {
     this.kc = new K3_Context(null, 10);
   }
@@ -30,7 +32,7 @@ export default class Script {
 
     const node = kc.ptr;
     switch (node.type) {
-      case K3_ASTNodeType.Function: {
+      case K3_ASTNode_Type.Function: {
         const funName = node.token.text;
         const scope = findFunScope(kc, funName);
         scope.declareFunctions.set(funName, {
@@ -40,29 +42,37 @@ export default class Script {
         });
         break;
       }
-      case K3_ASTNodeType.Block:
-      case K3_ASTNodeType.Program:
+      case K3_ASTNode_Type.Block:
+      case K3_ASTNode_Type.Program:
         for (let child of node.children) {
           kc.ptr = child;
           result = this.evaluate(kc, indent)
-          if (child.type == K3_ASTNodeType.Return) break;
+          if (child.type == K3_ASTNode_Type.Return) break;
         }
         break;
-      case K3_ASTNodeType.Return:
+      case K3_ASTNode_Type.Return:
         if (!node.children.length) break;
         kc.ptr = node.children[0];
         result = this.evaluate(kc, indent);
         break;
-      case K3_ASTNodeType.Additive: {
+      case K3_ASTNode_Type.Primary:
+        result = primaryExpression(node.token.text);
+        break;
+      case K3_ASTNode_Type.Unary: {
+        kc.ptr = node.children[0];
+        let val = this.evaluate(kc, `${indent}\t`);
+        result = unaryExpression(node.token.text, val);
+        break;
+      }
+      case K3_ASTNode_Type.Binary: {
         kc.ptr = node.children[0];
         let val1 = this.evaluate(kc, `${indent}\t`);
         kc.ptr = node.children[1];
         let val2 = this.evaluate(kc, `${indent}\t`);
-        if (node.token.type == Token.PLUS) result = val1 + val2;
-        else result = val1 - val2;
+        result = binaryExpression(node.token.text, val1, val2);
         break;
       }
-      case K3_ASTNodeType.Call: {
+      case K3_ASTNode_Type.Call: {
         let funName = node.token.text;
         const scope = findFunScope(kc, funName);
         let fun = scope.declareFunctions.get(funName);
@@ -87,20 +97,10 @@ export default class Script {
         kc.stack.popFrame();
         break;
       }
-      case K3_ASTNodeType.Multiplicative: {
-        kc.ptr = node.children[0];
-        let val1 = this.evaluate(kc, `${indent}\t`);
-        kc.ptr = node.children[1];
-        let val2 = this.evaluate(kc, `${indent}\t`);
-        if (node.token.text == "*") result = val1 * val2;
-        else if (node.token.text == "/") result = val1 / val2;
-        else if (node.token.text == "%") result = val1 % val2;
-        break;
-      }
-      case K3_ASTNodeType.NumberLiteral:
+      case K3_ASTNode_Type.NumberLiteral:
         result = parseInt(node.token.text);
         break;
-      case K3_ASTNodeType.Identifier: {
+      case K3_ASTNode_Type.Identifier: {
         let varName = node.token.text;
         const scope = findSymbolScope(kc, varName);
         if (scope.declareSymbols.has(varName)) {
@@ -110,17 +110,17 @@ export default class Script {
         } else throw Error(`unknown variable: ${varName}`)
         break;
       }
-      case K3_ASTNodeType.AssignmentStmt:
-      case K3_ASTNodeType.VarDeclaration: {
+      case K3_ASTNode_Type.AssignmentStmt:
+      case K3_ASTNode_Type.VarDeclaration: {
         let varName = node.token.text;
-        let varValue = null;
+        let rval = null;
         if (node.children.length) { //说明是初始化语句，给变量赋值
           kc.ptr = node.children[0];
-          varValue = this.evaluate(kc, `${indent}\t`);
+          rval = this.evaluate(kc, `${indent}\t`);
         }
         const scope = findSymbolScope(kc, varName);
-        scope.declareSymbols.set(varName, { value: varValue, type: K3_SymbolType.SYM_VARIABLE });
-        result = varValue;
+        scope.declareSymbols.set(varName, { value: rval, type: K3_SymbolType.SYM_VARIABLE });
+        result = rval;
         break;
       }
     }
@@ -129,4 +129,68 @@ export default class Script {
     }
     return result;
   }
+}
+
+function assignExpression(operator, lval, rval) {
+  let assignMap = {
+    '=': () => rval,
+    '>>=': () => lval >> rval,
+    '<<=': () => lval << rval,
+    '+=': () => lval + rval,
+    '-=': () => lval - rval,
+    '*=': () => lval * rval,
+    '/=': () => lval / rval,
+    '%=': () => lval % rval,
+  }
+  let fun = assignMap[operator];
+  return fun ? fun() : null;
+}
+function primaryExpression(text): any {
+  switch (text) {
+    case "null":
+      return null;
+    case "true":
+      return true;
+    case "false":
+      return false;
+    case "this": //todo
+    case "super"://todo;
+    default:
+      return undefined;
+  }
+}
+
+function unaryExpression(operator, val) {
+  let unaryMap = {
+    '!': () => !val,
+    '~': () => ~val
+  };
+  let fun = unaryMap[operator];
+  return fun ? fun() : null;
+}
+
+function binaryExpression(operator, val1, val2) {
+  let binaryMap = {
+    '+': () => val1 + val2,
+    '-': () => val1 - val2,
+    '*': () => val1 * val2,
+    '/': () => val1 / val2,
+    '%': () => val1 % val2,
+    '<<': () => val1 << val2,
+    '>>': () => val1 >> val2,
+    '>': () => val1 > val2,
+    '<': () => val1 < val2,
+    '<=': () => val1 <= val2,
+    '>=': () => val1 >= val2,
+    '==': () => val1 == val2,
+    '!=': () => val1 != val2,
+    '||': () => val1 || val2,
+    '&&': () => val1 && val2,
+    '|': () => val1 | val2,
+    '^': () => val1 ^ val2,
+    '&': () => val1 & val2,
+  }
+  let fun = binaryMap[operator];
+  if (fun) return fun();
+  return null;
 }
