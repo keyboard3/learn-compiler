@@ -1,2 +1,8 @@
-const acorn = require("acorn");
-console.log(acorn.parse("1 + 1", { ecmaVersion: 5 }));
+import Script from "./script";
+
+new Script().process(`
+function hello(){
+  console.log('2')
+} 
+hello();
+`)
