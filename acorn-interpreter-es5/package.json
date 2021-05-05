@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "test": "ts-node src/test.ts"
+  },
   "dependencies": {
     "acorn": "^8.2.2"
   },

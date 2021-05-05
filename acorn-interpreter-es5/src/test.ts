@@ -1,8 +1,13 @@
 import Script from "./script";
 
 new Script().process(`
+var age=0;
 function hello(){
-  console.log('2')
+  return function changeAge() {
+    age = 2;
+  }
 } 
-hello();
+var changeAge=hello();
+changeAge();
+console.log(age);
 `)

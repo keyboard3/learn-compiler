@@ -1,6 +1,5 @@
-import { Literal } from "./ast";
 import standardMap from './standard';
-
+import { Entry } from "./model";
 export class Context {
   constructor(script: Node, maxFrameSize: number) {
     this.script = this.ptr = script;
@@ -56,21 +55,22 @@ export class Scope {
   }
 
   parent: Scope;
-  declaration: { [key: string]: Literal["value"] | undefined | Function };
-  globalDeclaration: { [key: string]: Object };
-  get(name) {
+  declaration: { [key: string]: Entry };
+  globalDeclaration: { [key: string]: Entry };
+  get = (name): Entry => {
     if (this.declaration[name]) return this.declaration[name];
     else if (this.parent) return this.parent.get(name);
     else if (this.globalDeclaration[name]) return this.globalDeclaration[name];
     throw new ReferenceError(`${name} is not defined`);
   }
-  set(name, value) {
-    if (this.declaration[name]) this.declaration[name] = value;
+  set = (name, value) => {
+    if (this.declaration[name]) this.declaration[name] = new Entry(value);
     else if (this.parent) this.parent.set(name, value);
-    else if (this.globalDeclaration[name]) this.globalDeclaration[name] = value;
-    throw new ReferenceError(`${name} is not defined`);
+    else if (this.globalDeclaration[name]) this.globalDeclaration[name] = new Entry(value);
+    else throw new ReferenceError(`${name} is not defined`);
   }
-  declare(name, value) {
-    this.declaration[name] = value;
+  declare = (name, value): Entry => {
+    this.declaration[name] = new Entry(value);
+    return this.declaration[name];
   }
 }
