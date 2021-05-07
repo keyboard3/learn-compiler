@@ -1,5 +1,5 @@
 import * as acorn from "acorn";
-import { Context, Scope } from './context';
+import { Context, StackFrame } from './context';
 import { ExpressionStatement, Identifier, Literal, Program, VariableDeclaration, Node, CallExpression, FunctionDeclaration, MemberExpression, FunctionExpression, NewExpression, UpdateExpression, ThisExpression, BlockStatement, VariableDeclarator, ReturnStatement, ArrayExpression, ObjectExpression, AssignmentExpression, UnaryExpression, BinaryExpression, LogicalExpression, ForStatement, ForInStatement, WhileStatement, DoWhileStatement, BreakStatement, ContinueStatement, IfStatement, SwitchStatement, SwitchCase, ConditionalExpression, ThrowStatement, TryStatement, CatchClause } from "./ast";
 import Signal from './signal';
 import { Entry } from "./model";
@@ -78,13 +78,11 @@ class Visitor {
     this.context.getScope().declare(node.id.name, fn);
   }
   FunctionExpression = (node: FunctionExpression) => {
-    const staticParentScope = this.context.getScope();
     const context = this.context;
     const that = this;
     const fn = function () {
-      const scope = new Scope(staticParentScope);
-      context.stack.pushFrame({ scope });
-
+      context.stack.pushFrame(new StackFrame(context.stack.getFrame(), context.globalScope));
+      const scope = context.getScope();
       scope.declare('this', this);
       scope.declare('arguments', arguments);
 
@@ -143,7 +141,7 @@ class Visitor {
     const that = this;
     const rightVal = this.traverse(node.right);
     const ops = {
-      '=': () => setValue(node.left, (leftVal) => rightVal),
+      '=': () => setValue(node.left, (leftVal) => rightVal, true),
       '+=': () => setValue(node.left, (leftVal) => leftVal + rightVal),
       '-=': () => setValue(node.left, (leftVal) => leftVal - rightVal),
       '*=': () => setValue(node.left, (leftVal) => leftVal * rightVal),
@@ -158,11 +156,11 @@ class Visitor {
       '&=': () => setValue(node.left, (leftVal) => leftVal & rightVal),
     }
     return ops[node.operator]();
-    function setValue(left: Node, right: (leftVal) => any) {
+    function setValue(left: Node, right: (leftVal) => any, disableGetLeft: boolean = false) {
       const scope = that.context.getScope();
       if (left.type == "Identifier") {
         let leftNode = left as Identifier;
-        scope.set(leftNode.name, right(scope.get(leftNode.name)));
+        scope.set(leftNode.name, right(disableGetLeft ? null : scope.get(leftNode.name)));
       } else if (left.type == "MemberExpression") {
         let memberNode = left as MemberExpression;
         let obj = that.traverse(memberNode);
