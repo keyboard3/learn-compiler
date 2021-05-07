@@ -36,7 +36,7 @@ a=add(a,a)
   - [x] 变量声明
   - [x] 函数声明
   - [x] 函数调用
-  - [x] 字面量(number,string,true,false,null)
+  - [x] primary表达式
   - [x] return语句
   - [x] 一元表达式
   - [x] 二元表达式
