@@ -40,7 +40,7 @@ hello();
   - [x] 对象字面量
   - [x] try-catch-finally
   - [x] throw 表达式
-  - [x] es5 标准库
+  - [x] 支持标准库
 - 运行时
   - [x] 函数调用栈
   - [x] 静态作用域

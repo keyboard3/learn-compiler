@@ -41,18 +41,12 @@
     - [x] 数组字面量
     - [x] try-catch-finally
     - [x] throw表达式
-    - [x] es5标准库
+    - [x] 支持标准库
   - 运行时
     - [x] 函数调用栈
     - [x] 静态作用域
     - [x] 闭包
-- [ ] 续上实现es6-next的解释器
-- [ ] js手写一个超小的js虚拟机
-- [ ] 基于acorn更深入的解释器实现
-- [ ] 参考mocha1995实现一个优化性能后的多合一解释生成字节码
-- [ ] 对齐es5标准重新实现js解释器
-- [ ] 对齐es6-next标准重新实现js解释器
-- [ ] 再去参考spiderMonkey的早期实现
-- [ ] 然后再去看quickjs早期代码和近期实现
-- [ ] 最后看v8早期代码和阶段性升级代码
-- [ ] 尝试antlr尝试生成c89标准的语法树，然后转义生成llvm的IR
+- [ ] 用c++实现super-tiny-interpreter
+- [ ] 用c++实现tiny-interpreter
+- [ ] 用js实现super-tiny-vm
+- [ ] 用js实现tiny-vm
