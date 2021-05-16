@@ -4,7 +4,7 @@
 ```
 npm i
 //进入REPL
-ts-node src/cmd
+ts-node cmd
 
 //测试 必须以';'结尾
 int a=3;

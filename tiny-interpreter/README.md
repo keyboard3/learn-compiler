@@ -16,7 +16,7 @@ a=add(1,2);
 
 npm run test
 ```
-//src/test.ts
+//test.ts
 var c=0;
 function add(a,b){
   return a+b+c;

@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "ts-node src/test.ts"
+    "test": "ts-node test.ts"
   },
   "dependencies": {
     "acorn": "^8.2.2"

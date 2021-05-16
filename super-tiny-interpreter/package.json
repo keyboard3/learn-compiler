@@ -2,8 +2,8 @@
   "name": "super-tiny-interpreter",
   "version": "1.0.0",
   "scripts": {
-    "test": "ts-node src/test.ts",
-    "cmd": "ts-node src/cmd.ts"
+    "test": "ts-node test.ts",
+    "cmd": "ts-node cmd.ts"
   },
   "dependencies": {
     "typescript": "^4.2.4"

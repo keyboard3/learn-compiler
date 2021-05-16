@@ -2,8 +2,8 @@
   "name": "tiny-interpreter",
   "version": "1.0.0",
   "scripts": {
-    "ks": "ts-node src/cmd.ts",
-    "test": "ts-node src/test.ts"
+    "ks": "ts-node cmd.ts",
+    "test": "ts-node test.ts"
   },
   "devDependencies": {
     "@types/node": "^14.14.37",
