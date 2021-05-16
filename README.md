@@ -1,52 +1,14 @@
 # learn-compiler
-学习编译器
+通过js语言为入口，学习实践编译原理<br/>
+根据自己的认知，设计项目来实践编译原理
 ## 计划
-- [x] 用js写简单的解释器super-tiny-interpreter
-  - 包含词法解析，语法解析，解析执行语法树
-  - 仅支持赋值语句和算数表达式运算
-- [x] 用c++实现super-tiny-interpreter
-- [x] 用js写简单的解释器tiny-interpreter
-  - 词法解析
-    - 参考mocha1995较为完备
-    - 除了特殊进制表示的数字字面量和字符串字面量
-  - 语法解析
-    - 手写构建AST，目的支持语法解析
-  - 语法支持
-    - [x] 变量声明
-    - [x] 函数声明
-    - [x] 函数调用
-    - [x] return语句
-    - [x] primary表达式
-    - [x] 一元表达式
-    - [x] 二元表达式
-  - 运行时
-    - [x] 函数调用栈
-    - [x] 静态作用域
-- [ ] 用c++实现tiny-interpreter
-- [x] 基于acorn的parser用js实现es5的解释器 
-> 利用js特性，在此基础上实现对es5的语法解析
-  - 语法支持
-    - [x] 变量声明
-    - [x] 函数声明
-    - [x] 函数调用
-    - [x] 成员表达式
-    - [x] 赋值表达式
-    - [x] 一元表达式
-    - [x] 二元表达式
-    - [x] 条件表达式
-    - [x] 自增表达式
-    - [x] primary表达式
-    - [x] 循环语句
-    - [x] new 表达式
-    - [x] 对象字面量
-    - [x] 数组对象
-    - [x] 数组字面量
-    - [x] try-catch-finally
-    - [x] throw表达式
-    - [x] 支持标准库
-  - 运行时
-    - [x] 函数调用栈
-    - [x] 静态作用域
-    - [x] 闭包
-- [ ] 用js实现super-tiny-vm
-- [ ] 用js实现tiny-vm
+- [x] 超简单的解释器`js`：[super tiny interpreter](./super-tiny-interpreter)
+- [x] 超简单的解释器`c++`：[super tiny interpreter](./cpp-super-tiny-interpreter)
+- [x] 简单的js解释器`js`：[tiny interpreter](./tiny-interpreter)
+- [ ] 简单的js解释器`c++`
+- [x] 基于js实现es5语法的解释器：[acorn interpreter es5](./acorn-interpreter-es5)
+- [ ] 用js将super tiny解释器用字节码解释
+- [ ] 超简单解释器基于字节码解释`js`
+- [ ] 超简单解释器基于字节码解释`c++`
+- [ ] 简单解释器基于字节码解释`js`
+- [ ] 简单解释器基于字节码解释`c++`
