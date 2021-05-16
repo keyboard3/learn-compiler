@@ -46,7 +46,7 @@
     - [x] 函数调用栈
     - [x] 静态作用域
     - [x] 闭包
-- [ ] 用c++实现super-tiny-interpreter
+- [x] 用c++实现super-tiny-interpreter
 - [ ] 用c++实现tiny-interpreter
 - [ ] 用js实现super-tiny-vm
 - [ ] 用js实现tiny-vm
