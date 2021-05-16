@@ -4,6 +4,7 @@
 - [x] 用js写简单的解释器super-tiny-interpreter
   - 包含词法解析，语法解析，解析执行语法树
   - 仅支持赋值语句和算数表达式运算
+- [x] 用c++实现super-tiny-interpreter
 - [x] 用js写简单的解释器tiny-interpreter
   - 词法解析
     - 参考mocha1995较为完备
@@ -21,6 +22,7 @@
   - 运行时
     - [x] 函数调用栈
     - [x] 静态作用域
+- [ ] 用c++实现tiny-interpreter
 - [x] 基于acorn的parser用js实现es5的解释器 
 > 利用js特性，在此基础上实现对es5的语法解析
   - 语法支持
@@ -46,7 +48,5 @@
     - [x] 函数调用栈
     - [x] 静态作用域
     - [x] 闭包
-- [x] 用c++实现super-tiny-interpreter
-- [ ] 用c++实现tiny-interpreter
 - [ ] 用js实现super-tiny-vm
 - [ ] 用js实现tiny-vm
