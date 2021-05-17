@@ -1,10 +1,10 @@
-import { defineKeywords, K3_EOF, K3_Token, K3_TokenType as Token, CharStream } from "./models";
+import { defineKeywords, EOF, Token, TokenType as TT, CharStream } from "./models";
 
 /**
  * 词法分析器
  */
-export function tokenize(code: string): K3_Token[] {
-  let tokens: K3_Token[] = [];
+export function tokenize(code: string): Token[] {
+  let tokens: Token[] = [];
   const cs = new CharStream(code);
   let ch;
   do {
@@ -17,7 +17,7 @@ export function tokenize(code: string): K3_Token[] {
   return tokens;
 
   function skipLine() {
-    while ((ch = cs.getChar()) != K3_EOF && ch != '\n') {
+    while ((ch = cs.getChar()) != EOF && ch != '\n') {
       cs.unGetChar(ch);
       return;
     }
@@ -30,7 +30,7 @@ export function tokenize(code: string): K3_Token[] {
       } while (isAlpha(ch) || ch === '_' || ch === '$')
       if (defineKeywords[cs.tokenBuf]) {
         captureToken(defineKeywords[cs.tokenBuf]);
-      } else captureToken(Token.NAME);
+      } else captureToken(TT.NAME);
     }
   }
 
@@ -42,7 +42,7 @@ export function tokenize(code: string): K3_Token[] {
       }
       ch = cs.getChar();
     }
-    if (ch == K3_EOF) captureToken(Token.EOF);
+    if (ch == EOF) captureToken(TT.EOF);
   }
 
   function matchNumber() {
@@ -81,7 +81,7 @@ export function tokenize(code: string): K3_Token[] {
           }
         }
       }
-      captureToken(Token.NUMBER);
+      captureToken(TT.NUMBER);
     }
   }
 
@@ -90,7 +90,7 @@ export function tokenize(code: string): K3_Token[] {
       const qc = ch;
       ch = cs.getChar();
       while (ch != qc) {
-        if (ch == '\n' || ch == K3_EOF) {
+        if (ch == '\n' || ch == EOF) {
           cs.unGetChar(ch);
           //todo 上报语法错误 未终止的字符串字面量
           break;
@@ -129,7 +129,7 @@ export function tokenize(code: string): K3_Token[] {
         ch = cs.appendToTokenBuf(ch);
       }
       ch = cs.getChar();
-      captureToken(Token.STRING);
+      captureToken(TT.STRING);
     }
   }
 
@@ -138,62 +138,62 @@ export function tokenize(code: string): K3_Token[] {
     let tt;
     switch (ch) {
       case '\n':
-        tt = Token.EOL;
+        tt = TT.EOL;
         break;
       case ';':
-        tt = Token.SEMI;
+        tt = TT.SEMI;
         break;
       case '[':
-        tt = Token.LB;
+        tt = TT.LB;
         break;
       case ']':
-        tt = Token.RB;
+        tt = TT.RB;
         break;
       case '{':
-        tt = Token.LC;
+        tt = TT.LC;
         break;
       case '}':
-        tt = Token.RC;
+        tt = TT.RC;
         break;
       case '(':
-        tt = Token.LP;
+        tt = TT.LP;
         break;
       case ')':
-        tt = Token.RP;
+        tt = TT.RP;
         break;
       case ',':
-        tt = Token.COMMA;
+        tt = TT.COMMA;
         break;
       case '?':
-        tt = Token.HOOK;
+        tt = TT.HOOK;
         break;
       case ':':
-        tt = Token.COLON;
+        tt = TT.COLON;
         break;
       case '.':
-        tt = Token.DOT;
+        tt = TT.DOT;
         break;
       case '|':
-        if (matchChar('|')) tt = Token.OR;
-        else if (matchChar('=')) tt = Token.ASSIGN;
-        else tt = Token.BITOR;
+        if (matchChar('|')) tt = TT.OR;
+        else if (matchChar('=')) tt = TT.ASSIGN;
+        else tt = TT.BITOR;
         break;
       case '^':
-        if (matchChar('=')) tt = Token.ASSIGN;
-        else tt = Token.BITXOR;
+        if (matchChar('=')) tt = TT.ASSIGN;
+        else tt = TT.BITXOR;
         break;
       case '&':
-        if (matchChar('&')) tt = Token.AND;
-        else if (matchChar('=')) tt = Token.ASSIGN;
-        else tt = Token.BITAND;
+        if (matchChar('&')) tt = TT.AND;
+        else if (matchChar('=')) tt = TT.ASSIGN;
+        else tt = TT.BITAND;
         break;
       case '=':
-        if (matchChar('=')) tt = Token.EQOP;
-        else tt = Token.ASSIGN;
+        if (matchChar('=')) tt = TT.EQOP;
+        else tt = TT.ASSIGN;
         break;
       case '!':
-        if (matchChar('=')) tt = Token.EQOP;
-        else tt = Token.UNARYOP;
+        if (matchChar('=')) tt = TT.EQOP;
+        else tt = TT.UNARYOP;
         break;
       case '<':
         /* XXX treat HTML begin-comment as comment-till-end-of-line */
@@ -205,16 +205,16 @@ export function tokenize(code: string): K3_Token[] {
           unGetChar('!');
         }
         if (matchChar('<')) {
-          tt = matchChar('=') ? Token.ASSIGN : Token.SHOP;
-        } else tt = Token.RELOP;
+          tt = matchChar('=') ? TT.ASSIGN : TT.SHOP;
+        } else tt = TT.RELOP;
         break;
       case '>':
         if (matchChar('>')) {
-          tt = matchChar('=') ? Token.ASSIGN : Token.SHOP;
-        } else tt = Token.RELOP;
+          tt = matchChar('=') ? TT.ASSIGN : TT.SHOP;
+        } else tt = TT.RELOP;
         break;
       case '*':
-        tt = matchChar('=') ? Token.ASSIGN : Token.MULOP;
+        tt = matchChar('=') ? TT.ASSIGN : TT.MULOP;
         break;
       case '/':
         if (matchChar('/')) {
@@ -222,27 +222,27 @@ export function tokenize(code: string): K3_Token[] {
           return;
         }
         if (matchChar('*')) {
-          while ((tt = cs.getChar()) != K3_EOF && !(ch as any == '*' && matchChar('/'))) {
+          while ((tt = cs.getChar()) != EOF && !(ch as any == '*' && matchChar('/'))) {
             if (ch == '/' && matchChar('*')) {
               if (matchChar('/')) return;
             }
           }
-          if (ch == K3_EOF) return;
+          if (ch == EOF) return;
         }
-        tt = matchChar('=') ? Token.ASSIGN : Token.MULOP;
+        tt = matchChar('=') ? TT.ASSIGN : TT.MULOP;
         break;
       case '%':
-        tt = matchChar('=') ? Token.ASSIGN : Token.MULOP;
+        tt = matchChar('=') ? TT.ASSIGN : TT.MULOP;
         break;
       case '~':
-        tt = Token.UNARYOP;
+        tt = TT.UNARYOP;
         break;
       case '+':
       case '-':
-        if (matchChar('=')) tt = Token.ASSIGN;
-        else if (matchChar('-')) tt = Token.INCOP;
-        else if (ch == '-') tt = Token.MINUS;
-        else tt = Token.PLUS;
+        if (matchChar('=')) tt = TT.ASSIGN;
+        else if (matchChar('-')) tt = TT.INCOP;
+        else if (ch == '-') tt = TT.MINUS;
+        else tt = TT.PLUS;
         break;
       default:
         return;
@@ -266,7 +266,7 @@ export function tokenize(code: string): K3_Token[] {
     }
   }
 
-  function captureToken(type: Token) {
+  function captureToken(type: TT) {
     cs.token = {
       ...cs.token,
       type: type,
@@ -274,7 +274,7 @@ export function tokenize(code: string): K3_Token[] {
     }
     cs.tokenBuf = "";
     tokens.push({ ...cs.token });
-    cs.token = new K3_Token();
+    cs.token = new Token();
   }
 }
 

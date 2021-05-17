@@ -37,7 +37,9 @@ import Script from "./script";
 
 const script = new Script();
 script.process(`
-var a=2;
-var b=3;
-a = true&&false;
+var a=1;
+function hello(){
+  a;
+}
+hello();
 `);

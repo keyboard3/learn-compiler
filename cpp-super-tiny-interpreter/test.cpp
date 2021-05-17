@@ -7,6 +7,7 @@ int main()
 {
    Script script = Script();
    ASTNode node = parse("int a =14;int b=a;");
+   node.dumpAST(" ");
    auto result = script.evaluate(node, "");
    cout << result << endl;
    return 0;

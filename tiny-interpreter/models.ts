@@ -1,7 +1,4 @@
-import { initGlobalScope } from "./api";
-
-
-export enum K3_TokenType {
+export enum TokenType {
   EOF,//文件末尾
   EOL, //行尾
   SEMI,//语句末尾 ;s
@@ -47,71 +44,71 @@ export enum K3_TokenType {
 }
 
 export const defineKeywords = {
-  "break": K3_TokenType.BREAK,
-  "case": K3_TokenType.CASE,
-  "continue": K3_TokenType.CONTINUE,
-  "default": K3_TokenType.DEFAULT,
-  "delete": K3_TokenType.UNARYOP,
-  "do": K3_TokenType.DO,
-  "else": K3_TokenType.ELSE,
-  "false": K3_TokenType.PRIMARY,
-  "for": K3_TokenType.FOR,
-  "function": K3_TokenType.FUNCTION,
-  "if": K3_TokenType.IF,
-  "in": K3_TokenType.IN,
-  "new": K3_TokenType.NEW,
-  "null": K3_TokenType.PRIMARY,
-  "return": K3_TokenType.RETURN,
-  "switch": K3_TokenType.SWITCH,
-  "this": K3_TokenType.PRIMARY,
-  "true": K3_TokenType.PRIMARY,
-  "typeof": K3_TokenType.UNARYOP,
-  "var": K3_TokenType.VAR,
-  "void": K3_TokenType.UNARYOP,
-  "while": K3_TokenType.WHILE,
-  "with": K3_TokenType.WITH,
+  "break": TokenType.BREAK,
+  "case": TokenType.CASE,
+  "continue": TokenType.CONTINUE,
+  "default": TokenType.DEFAULT,
+  "delete": TokenType.UNARYOP,
+  "do": TokenType.DO,
+  "else": TokenType.ELSE,
+  "false": TokenType.PRIMARY,
+  "for": TokenType.FOR,
+  "function": TokenType.FUNCTION,
+  "if": TokenType.IF,
+  "in": TokenType.IN,
+  "new": TokenType.NEW,
+  "null": TokenType.PRIMARY,
+  "return": TokenType.RETURN,
+  "switch": TokenType.SWITCH,
+  "this": TokenType.PRIMARY,
+  "true": TokenType.PRIMARY,
+  "typeof": TokenType.UNARYOP,
+  "var": TokenType.VAR,
+  "void": TokenType.UNARYOP,
+  "while": TokenType.WHILE,
+  "with": TokenType.WITH,
   //RESERVE_JAVA_KEYWORDS
-  "abstract": K3_TokenType.RESERVED,
-  "boolean": K3_TokenType.RESERVED,
-  "byte": K3_TokenType.RESERVED,
-  "catch": K3_TokenType.RESERVED,
-  "char": K3_TokenType.RESERVED,
-  "class": K3_TokenType.RESERVED,
-  "const": K3_TokenType.RESERVED,
-  "double": K3_TokenType.RESERVED,
-  "extends": K3_TokenType.RESERVED,
-  "final": K3_TokenType.RESERVED,
-  "finally": K3_TokenType.RESERVED,
-  "float": K3_TokenType.RESERVED,
-  "goto": K3_TokenType.RESERVED,
-  "implements": K3_TokenType.RESERVED,
-  "import": K3_TokenType.RESERVED,
-  "instanceof": K3_TokenType.RESERVED,
-  "int": K3_TokenType.RESERVED,
-  "interface": K3_TokenType.RESERVED,
-  "long": K3_TokenType.RESERVED,
-  "native": K3_TokenType.RESERVED,
-  "package": K3_TokenType.RESERVED,
-  "private": K3_TokenType.RESERVED,
-  "protected": K3_TokenType.RESERVED,
-  "public": K3_TokenType.RESERVED,
-  "short": K3_TokenType.RESERVED,
-  "static": K3_TokenType.RESERVED,
-  "super": K3_TokenType.PRIMARY,
-  "synchronized": K3_TokenType.RESERVED,
-  "throw": K3_TokenType.RESERVED,
-  "throws": K3_TokenType.RESERVED,
-  "transient": K3_TokenType.RESERVED,
-  "try": K3_TokenType.RESERVED,
-  "volatile": K3_TokenType.RESERVED,
+  "abstract": TokenType.RESERVED,
+  "boolean": TokenType.RESERVED,
+  "byte": TokenType.RESERVED,
+  "catch": TokenType.RESERVED,
+  "char": TokenType.RESERVED,
+  "class": TokenType.RESERVED,
+  "const": TokenType.RESERVED,
+  "double": TokenType.RESERVED,
+  "extends": TokenType.RESERVED,
+  "final": TokenType.RESERVED,
+  "finally": TokenType.RESERVED,
+  "float": TokenType.RESERVED,
+  "goto": TokenType.RESERVED,
+  "implements": TokenType.RESERVED,
+  "import": TokenType.RESERVED,
+  "instanceof": TokenType.RESERVED,
+  "int": TokenType.RESERVED,
+  "interface": TokenType.RESERVED,
+  "long": TokenType.RESERVED,
+  "native": TokenType.RESERVED,
+  "package": TokenType.RESERVED,
+  "private": TokenType.RESERVED,
+  "protected": TokenType.RESERVED,
+  "public": TokenType.RESERVED,
+  "short": TokenType.RESERVED,
+  "static": TokenType.RESERVED,
+  "super": TokenType.PRIMARY,
+  "synchronized": TokenType.RESERVED,
+  "throw": TokenType.RESERVED,
+  "throws": TokenType.RESERVED,
+  "transient": TokenType.RESERVED,
+  "try": TokenType.RESERVED,
+  "volatile": TokenType.RESERVED,
 };
 
-export class K3_Token {
-  type: K3_TokenType;
+export class Token {
+  type: TokenType;
   text: string
 }
 
-export enum K3_ASTNode_Type {
+export enum ASTNodeType {
   Program = "Program",
   AssignmentStmt = "AssignmentStmt",
   VarDeclaration = "VarDeclaration",
@@ -129,25 +126,19 @@ export enum K3_ASTNode_Type {
   Call = "Call"
 }
 
-export class K3_ASTNode {
-  type: K3_ASTNode_Type;
-  token: K3_Token;
-  prefix: boolean;//主要是为了区分自增符号的
-  args: K3_Symbol[];//函数声明这个参数就是形参
-  children: Array<K3_ASTNode>;
-  parent: K3_ASTNode;
+export class ASTNode {
+  type: ASTNodeType;
+  token: Token;
+  children: Array<ASTNode>;
 
-  constructor(type: K3_ASTNode_Type, token: K3_Token, prefix = false) {
+  constructor(type: ASTNodeType, token: Token) {
     this.type = type;
     this.token = token;
     this.children = [];
-    this.args = [];
-    this.prefix = prefix;
   }
 
-  addChild(node: K3_ASTNode) {
+  addChild(node: ASTNode) {
     this.children.push(node);
-    node.parent = this;
   }
 
   /**
@@ -163,85 +154,72 @@ export class K3_ASTNode {
   }
 }
 
-export class K3_Context {
-  constructor(script: K3_ASTNode, maxFrameSize: number) {
-    this.script = this.ptr = script;
-    const globalScope = new K3_Scope(null);
-    initGlobalScope(globalScope);
-    this.globalScope = globalScope;
-    this.stack = new K3_Stack(maxFrameSize);
-  }
-
-  globalScope: K3_Scope;
-  stack: K3_Stack;
-  script: K3_ASTNode;
-  ptr: K3_ASTNode;
-}
-
-export class K3_Stack {
-  maxFrameSize: number;
-  frames: K3_StackFrame[];
-  ptr: number;
-
+export class Context {
   constructor(maxFrameSize: number) {
+    this.globalScope = {};
     this.maxFrameSize = maxFrameSize;
     this.frames = [];
-    this.ptr = -1;
   }
 
-  pushFrame(frame: K3_StackFrame) {
+  globalScope: { [key: string]: any };
+  maxFrameSize: number;
+  frames: StackFrame[];
+  stack: StackFrame;//当前栈帧
+
+  pushFrame(frame: StackFrame) {
     if (this.frames.length + 1 >= this.maxFrameSize) throw Error("stack overflow")
     this.frames.push(frame);
-    this.ptr++;
+    this.stack = frame;
   }
 
   popFrame() {
     if (this.frames.length - 1 < 0) return;
-    this.frames.pop();
-    this.ptr--;
+    this.stack = this.frames.pop();
+  }
+
+  get(name: string) {
+    if (this.stack) return this.stack.get(name);
+    if (this.globalScope[name]) return this.globalScope[name];
+    throw `${name} is not defined`;
+  }
+  set(name: string, value: any) {
+    if (this.stack) return this.stack.set(name, value);
+    this.globalScope[name] = value;
+  }
+  declare(name: string, value: any) {
+    if (this.stack) return this.stack.declare(name, value);
+    this.globalScope[name] = value;
   }
 }
 
-export interface K3_StackFrame {
-  scope: K3_Scope;
-}
-
-export class K3_Scope {
-  constructor(parent: K3_Scope) {
-    this.parent = parent;
-    this.declareSymbols = new Map();
-    this.declareFunctions = new Map();
+export class StackFrame {
+  staticStackFrame: StackFrame | null;//静态作用域的栈帧
+  localScope: { [key: string]: any };
+  globalScope: Object;
+  constructor(staticStackFrame: StackFrame | null, globalScope: Object) {
+    this.staticStackFrame = staticStackFrame;
+    this.localScope = new Map();
+    this.globalScope = globalScope;
   }
-
-  parent: K3_Scope;
-  declareSymbols: Map<string, K3_Symbol>;
-  declareFunctions: Map<string, K3_Function>;
-  callResult: any;
+  get(name: string) {
+    if (this.localScope[name]) return this.localScope[name];
+    else if (this.staticStackFrame) return this.staticStackFrame.get(name);
+    else if (this.globalScope[name]) return this.globalScope[name];
+    throw `${name} is not defined`;
+  }
+  declare(name: string, value: any) {
+    this.localScope[name] = value;
+  }
+  set(name: string, value: any) {
+    if (this.localScope[name]) this.localScope[name] = value;
+    else if (this.staticStackFrame) this.staticStackFrame.set(name, value);
+    else this.globalScope[name] = value;//未找到直接丢到全局变量
+  }
 }
-
-export interface K3_Symbol {
-  value: any;
-  type: K3_SymbolType;
-}
-
-export interface K3_Function {
-  call?: (...any) => any;
-  script?: K3_ASTNode;
-  parentScope: K3_Scope;
-  args?: K3_Symbol[]
-}
-
-export enum K3_SymbolType {
-  SYM_UNDEF,
-  SYM_ARGUMENT,
-  SYM_VARIABLE,
-  SYM_PROPERTY
-}
-
-export const K3_EOF = null;
+export const EOF = null;
 
 export class CharStream {
-  token: K3_Token;//最后一个匹配的token
+  token: Token;//最后一个匹配的token
   tokenBuf: string;
   code: string;
   ptr: number;
@@ -250,11 +228,11 @@ export class CharStream {
     this.code = code;
     this.ptr = 0;
     this.tokenBuf = "";
-    this.token = new K3_Token();
+    this.token = new Token();
   }
 
   getChar() {
-    if (this.ptr >= this.code.length) return K3_EOF;
+    if (this.ptr >= this.code.length) return EOF;
     const char = this.code[this.ptr];
     this.ptr++;
     return char;
@@ -268,7 +246,7 @@ export class CharStream {
 
   unGetChar(char: string) {
     //非空白字符，不回退。只回退有效字符
-    if (char == K3_EOF) return;
+    if (char == EOF) return;
     if (/\s/.test(char)) return;
 
     if (this.ptr - char.length <= 0) return;
@@ -289,29 +267,28 @@ export class CharStream {
 }
 
 export class TokenStream {
-  node: K3_ASTNode;
-  tokens: K3_Token[];
+  tokens: Token[];
   ptr: number;
 
-  constructor(tokens: K3_Token[]) {
+  constructor(tokens: Token[]) {
     this.tokens = tokens;
     this.ptr = 0;
   }
 
-  getToken(): K3_Token | null {
-    if (this.ptr > this.tokens.length) return K3_EOF;
+  getToken(): Token | null {
+    if (this.ptr > this.tokens.length) return EOF;
     const token = this.tokens[this.ptr];
     this.ptr++;
     return token;
   }
 
-  unGetToken(token: K3_Token) {
+  unGetToken(token: Token) {
     if (token == null) return;
     if (this.ptr - 1 < 0) return;
     this.ptr--;
   }
 
-  peekToken(): K3_Token | null {
+  peekToken(): Token | null {
     const token = this.getToken();
     if (!token) return null;
     this.unGetToken(token);

@@ -54,7 +54,6 @@ export class ASTNode {
   type: ASTNodeType;
   text: string;
   children: Array<ASTNode>;
-  parent: ASTNode;
 
   constructor(type: ASTNodeType, text: string) {
     this.type = type;
@@ -64,7 +63,6 @@ export class ASTNode {
 
   addChild(node: ASTNode) {
     this.children.push(node);
-    node.parent = this;
   }
 
   /**

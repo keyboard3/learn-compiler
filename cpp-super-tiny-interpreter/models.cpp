@@ -1,6 +1,7 @@
 
 #include "models.h"
-inline const char *ToString(ASTNodeType v);
+#include "map"
+inline string ToString(ASTNodeType v);
 
 void ASTNode::addChild(ASTNode node)
 {
@@ -15,25 +16,23 @@ void ASTNode::dumpAST(string indent)
   }
 }
 
-inline const char *ToString(ASTNodeType v)
+map<ASTNodeType, string> strTypeMap = {
+    {ASTNodeType::Program, "Program"},
+    {ASTNodeType::AssignmentStmt, "AssignmentStmt"},
+    {ASTNodeType::IntDeclaration, "IntDeclaration"},
+    {ASTNodeType::Additive, "Additive"},
+    {ASTNodeType::Multiplicative, "Multiplicative"},
+    {ASTNodeType::IntLiteral, "IntLiteral"},
+    {ASTNodeType::Identifier, "Identifier"},
+};
+inline string ToString(ASTNodeType v)
 {
-  switch (v)
+  try
   {
-  case ASTNodeType::Program:
-    return "Program";
-  case ASTNodeType::AssignmentStmt:
-    return "AssignmentStmt";
-  case ASTNodeType::IntDeclaration:
-    return "IntDeclaration";
-  case ASTNodeType::Additive:
-    return "Additive";
-  case ASTNodeType::Multiplicative:
-    return "Multiplicative";
-  case ASTNodeType::IntLiteral:
-    return "IntLiteral";
-  case ASTNodeType::Identifier:
-    return "Identifier";
-  default:
+    return strTypeMap.at(v);
+  }
+  catch (exception e)
+  {
     return "[Unknown ASTNodeType]";
   }
 }
