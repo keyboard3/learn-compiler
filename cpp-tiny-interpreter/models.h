@@ -116,12 +116,12 @@ map<string, TokenType> defineKeywords{
     {"volatile", TokenType::RESERVED},
 };
 //token定义
-class K3_Token
+class Token
 {
 public:
   TokenType type;
   string text;
-  K3_Token(TokenType type, string text) : type(type), text(text){};
+  Token(TokenType type, string text) : type(type), text(text){};
 };
 //语法树的节点类型
 enum class ASTNodeType
@@ -146,9 +146,9 @@ class ASTNode
 {
 public:
   ASTNodeType type;
-  K3_Token *token;
+  Token *token;
   list<ASTNode> children;
-  ASTNode(ASTNodeType type, K3_Token *token) : type(type), token(token){};
+  ASTNode(ASTNodeType type, Token *token) : type(type), token(token){};
   void addChild(ASTNode node);
   void dumpAST(string indent);
 };
@@ -159,7 +159,11 @@ public:
   int maxFrameSize;
   list<StackFrame *> frames;
   StackFrame *frame;
-  Context(int maxFrameSize) : maxFrameSize(maxFrameSize){};
+  map<string, Entry*> *globalScope;
+  Context(int maxFrameSize) : maxFrameSize(maxFrameSize)
+  {
+    globalScope = {};
+  };
   void pushFrame(StackFrame *frame);
   StackFrame *popFrame();
   Entry *get(string name);
@@ -205,18 +209,11 @@ enum class PrimaryFlag
   undefinedFlag,
   nullFlag
 };
-class CharStream
-{
-public:
-  list<char> &chars;
-  char *ptr;
-  CharStream(list<char> &chars) : chars(chars){};
-};
 class TokenStream
 {
 public:
-  list<K3_Token> &tokens;
-  K3_Token *ptr;
-  TokenStream(list<K3_Token> &tokens) : tokens(tokens){};
+  list<Token> &tokens;
+  Token *ptr;
+  TokenStream(list<Token> &tokens) : tokens(tokens){};
 };
 #endif

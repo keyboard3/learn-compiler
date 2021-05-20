@@ -81,3 +81,26 @@ StackFrame *Context::popFrame()
   frames.pop_back();
   return frames.back();
 }
+Entry *Context::get(string name)
+{
+  if (frame != NULL)
+    return frame->get(name);
+  if (globalScope->find(name) != globalScope->end())
+    return globalScope->at(name);
+  throw name + " is not defined";
+}
+void Context::set(string name, Entry *value)
+{
+  if (frame != NULL)
+    return frame->set(name, value);
+  globalScope->erase(name);
+  globalScope->emplace(name, value);
+}
+void Context::declare(string name, Entry *value)
+{
+  if (frame != NULL)
+    return frame->declare(name, value);
+  globalScope->erase(name);
+  globalScope->emplace(name, value);
+}
+//todo 补充Entry的方法
