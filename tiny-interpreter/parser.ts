@@ -1,5 +1,5 @@
 import * as lexer from "./lexer";
-import { ASTNode, ASTNode_Type, Token, TokenType as TType, TokenStream } from "./models";
+import { ASTNode, ASTNodeType, Token, TokenType as TType, TokenStream } from "./models";
 
 export function parse(code: string) {
   const tokens = lexer.tokenize(code);
@@ -13,7 +13,7 @@ export function parse(code: string) {
  */
 function prog(tokens: Token[]): ASTNode {
   const ts = new TokenStream(tokens);
-  let node = new ASTNode(ASTNode_Type.Program, null);
+  let node = new ASTNode(ASTNodeType.Program, null);
   let token;
   while (token = ts.peekToken()) {
     if (token.type == TType.EOF) break;
@@ -47,7 +47,7 @@ function functionDefinition(ts: TokenStream): ASTNode | null {
   }
   token = ts.getToken();
   if (token.type !== TType.NAME) throw Error("function must has name");
-  let node = new ASTNode(ASTNode_Type.Function, token);
+  let node = new ASTNode(ASTNodeType.Function, token);
   token = ts.getToken();
   if (token.type !== TType.LP) throw Error("function define error");
   //函数定义参数不做签名检查，不用保留参数
@@ -77,7 +77,7 @@ function callExpression(ts: TokenStream) {
     ts.unGetToken(token);
     return null;
   }
-  let node = new ASTNode(ASTNode_Type.Call, token);
+  let node = new ASTNode(ASTNodeType.Call, token);
   ts.getToken();
   token = ts.peekToken();
   if (!notToken(token, TType.RP)) {
@@ -96,13 +96,6 @@ function callExpression(ts: TokenStream) {
 }
 
 /**
- * for循环语句 forDefinition :: for '(' varDeclare ',' condition ',' expression ')' blockStatement
- */
-function forDefinition(): ASTNode | null {
-  return null;
-}
-
-/**
  * 块级语句 blackStatement :: '{' (statement)* '}'
  */
 function blockStatement(ts: TokenStream): ASTNode | null {
@@ -111,7 +104,7 @@ function blockStatement(ts: TokenStream): ASTNode | null {
     ts.unGetToken(token);
     return null;
   }
-  let node = new ASTNode(ASTNode_Type.Block, null);
+  let node = new ASTNode(ASTNodeType.Block, null);
   do {
     let child = statement(ts);
     if (!child) break;
@@ -131,7 +124,7 @@ function returnStatement(ts: TokenStream): ASTNode | null {
     ts.unGetToken(token);
     return null;
   }
-  let node = new ASTNode(ASTNode_Type.Return, null);
+  let node = new ASTNode(ASTNodeType.Return, null);
   const child = expressionStatement(ts);
   if (child) node.addChild(child);
   return node;
@@ -154,7 +147,7 @@ function unaryExpression(ts: TokenStream) {
     ts.unGetToken(token);
     return null;
   }
-  let node = new ASTNode(ASTNode_Type.Unary, token);
+  let node = new ASTNode(ASTNodeType.Unary, token);
   let child = primary(ts);
   node.addChild(child);
   return node;
@@ -166,7 +159,7 @@ function unaryExpression(ts: TokenStream) {
 function BinaryExpression(ts: TokenStream) {
   let child = additive(ts);
   if (!child) return null;
-  if (child.type == ASTNode_Type.Binary) return child;
+  if (child.type == ASTNodeType.Binary) return child;
   //证明当前node是number/string
   let token = ts.peekToken();
   switch (token?.type) {
@@ -181,7 +174,7 @@ function BinaryExpression(ts: TokenStream) {
       {
         ts.getToken();
         let child2 = additive(ts);
-        let node = new ASTNode(ASTNode_Type.Binary, token);
+        let node = new ASTNode(ASTNodeType.Binary, token);
         node.addChild(child);
         node.addChild(child2);
         return node;
@@ -203,7 +196,7 @@ function assignmentStatement(ts: TokenStream): ASTNode | null {
     ts.unGetToken(token);
     return null;
   }
-  node = new ASTNode(ASTNode_Type.AssignmentStmt, token);
+  node = new ASTNode(ASTNodeType.AssignmentStmt, token);
   token = ts.getToken();
   if (notToken(token, TType.ASSIGN)) {
     ts.unGetToken(token);//+ =
@@ -230,7 +223,7 @@ function varDeclare(ts: TokenStream): ASTNode | null {
   }
   token = ts.getToken();
   if (notToken(token, TType.NAME)) throw Error("variable name expected");
-  node = new ASTNode(ASTNode_Type.VarDeclaration, token);
+  node = new ASTNode(ASTNodeType.VarDeclaration, token);
   token = ts.getToken();
   if (notToken(token, TType.ASSIGN)) {
     ts.unGetToken(token);
@@ -257,7 +250,7 @@ function additive(ts: TokenStream): ASTNode | null {
     if (token.type != TType.PLUS && token.type != TType.MINUS) break;
     let child2 = multiplicative(ts);
     if (!child2) throw Error("invalid additive expression, expecting the right part.");
-    node = new ASTNode(ASTNode_Type.Binary, token);
+    node = new ASTNode(ASTNodeType.Binary, token);
     node.addChild(child1);
     node.addChild(child2)
     child1 = node;
@@ -280,7 +273,7 @@ function multiplicative(ts: TokenStream): ASTNode | null {
     if (notToken(token, TType.MULOP)) break;
     let child2 = primary(ts);
     if (!child2) throw Error("invalid additive expression, expecting the right part.");
-    node = new ASTNode(ASTNode_Type.Binary, token);
+    node = new ASTNode(ASTNodeType.Binary, token);
     node.addChild(child1);
     node.addChild(child2)
     child1 = node;
@@ -299,11 +292,11 @@ function primary(ts: TokenStream): ASTNode | null {
   const token = ts.getToken();
   if (!token) return null;
   if (token.type == TType.PRIMARY) {
-    node = new ASTNode(ASTNode_Type.Primary, token);
+    node = new ASTNode(ASTNodeType.Primary, token);
   } else if (token.type == TType.NUMBER) {
-    node = new ASTNode(ASTNode_Type.NumberLiteral, token);
+    node = new ASTNode(ASTNodeType.NumberLiteral, token);
   } else if (token.type == TType.NAME) {
-    node = new ASTNode(ASTNode_Type.Identifier, token);
+    node = new ASTNode(ASTNodeType.Identifier, token);
   } else if (token.type == TType.LP) {
     node = expressionStatement(ts);
     if (!node) throw Error("expecting an additive expression inside parenthesis");
