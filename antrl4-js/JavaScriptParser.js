@@ -2,6 +2,8 @@
 // jshint ignore: start
 import antlr4 from 'antlr4';
 import JavaScriptParserListener from './JavaScriptParserListener.js';
+import JavaScriptParserVisitor from './JavaScriptParserVisitor.js';
+
 import JavaScriptParserBase from './JavaScriptParserBase.js';
 
 
@@ -5830,6 +5832,14 @@ class ProgramContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitProgram(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -5863,6 +5873,14 @@ class SourceElementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitSourceElement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitSourceElement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -5976,6 +5994,14 @@ class StatementContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -6017,6 +6043,14 @@ class BlockContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitBlock(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitBlock(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6061,6 +6095,14 @@ class StatementListContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitStatementList(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -6098,6 +6140,14 @@ class ImportStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitImportStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitImportStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6153,6 +6203,14 @@ class ImportFromBlockContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitImportFromBlock(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitImportFromBlock(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6217,6 +6275,14 @@ class ModuleItemsContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitModuleItems(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -6254,6 +6320,14 @@ class ImportDefaultContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitImportDefault(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitImportDefault(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6306,6 +6380,14 @@ class ImportNamespaceContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitImportNamespace(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -6343,6 +6425,14 @@ class ImportFromContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitImportFrom(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitImportFrom(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6389,6 +6479,14 @@ class AliasNameContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitAliasName(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitAliasName(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6454,6 +6552,14 @@ class ExportDefaultDeclarationContext extends ExportStatementContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitExportDefaultDeclaration(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -6492,6 +6598,14 @@ class ExportDeclarationContext extends ExportStatementContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitExportDeclaration(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitExportDeclaration(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6541,6 +6655,14 @@ class ExportFromBlockContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitExportFromBlock(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -6584,6 +6706,14 @@ class DeclarationContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitDeclaration(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -6621,6 +6751,14 @@ class VariableStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitVariableStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitVariableStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6681,6 +6819,14 @@ class VariableDeclarationListContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitVariableDeclarationList(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -6724,6 +6870,14 @@ class VariableDeclarationContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitVariableDeclaration(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -6757,6 +6911,14 @@ class EmptyStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitEmptyStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitEmptyStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6796,6 +6958,14 @@ class ExpressionStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitExpressionStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitExpressionStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6858,6 +7028,14 @@ class IfStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitIfStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitIfStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -6935,6 +7113,14 @@ class DoStatementContext extends IterationStatementContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitDoStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -6977,6 +7163,14 @@ class WhileStatementContext extends IterationStatementContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitWhileStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitWhileStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7046,6 +7240,14 @@ class ForStatementContext extends IterationStatementContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitForStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -7100,6 +7302,14 @@ class ForInStatementContext extends IterationStatementContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitForInStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitForInStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7162,6 +7372,14 @@ class ForOfStatementContext extends IterationStatementContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitForOfStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -7203,6 +7421,14 @@ class VarModifierContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitVarModifier(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitVarModifier(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7248,6 +7474,14 @@ class ContinueStatementContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitContinueStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -7289,6 +7523,14 @@ class BreakStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitBreakStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitBreakStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7334,6 +7576,14 @@ class ReturnStatementContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitReturnStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -7375,6 +7625,14 @@ class YieldStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitYieldStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitYieldStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7428,6 +7686,14 @@ class WithStatementContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitWithStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -7477,6 +7743,14 @@ class SwitchStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitSwitchStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitSwitchStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7533,6 +7807,14 @@ class CaseBlockContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitCaseBlock(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -7573,6 +7855,14 @@ class CaseClausesContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitCaseClauses(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitCaseClauses(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7622,6 +7912,14 @@ class CaseClauseContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitCaseClause(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -7663,6 +7961,14 @@ class DefaultClauseContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitDefaultClause(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitDefaultClause(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7708,6 +8014,14 @@ class LabelledStatementContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitLabelledStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -7749,6 +8063,14 @@ class ThrowStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitThrowStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitThrowStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7796,6 +8118,14 @@ class TryStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitTryStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitTryStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7849,6 +8179,14 @@ class CatchProductionContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitCatchProduction(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -7888,6 +8226,14 @@ class FinallyProductionContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitFinallyProduction(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -7925,6 +8271,14 @@ class DebuggerStatementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitDebuggerStatement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitDebuggerStatement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -7990,6 +8344,14 @@ class FunctionDeclarationContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitFunctionDeclaration(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -8031,6 +8393,14 @@ class ClassDeclarationContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitClassDeclaration(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitClassDeclaration(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -8089,6 +8459,14 @@ class ClassTailContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitClassTail(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitClassTail(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -8193,6 +8571,14 @@ class ClassElementContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitClassElement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -8260,6 +8646,14 @@ class MethodDefinitionContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitMethodDefinition(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -8318,6 +8712,14 @@ class FormalParameterListContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitFormalParameterList(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -8361,6 +8763,14 @@ class FormalParameterArgContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitFormalParameterArg(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -8398,6 +8808,14 @@ class LastFormalParameterArgContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitLastFormalParameterArg(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitLastFormalParameterArg(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -8443,6 +8861,14 @@ class FunctionBodyContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitFunctionBody(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -8483,6 +8909,14 @@ class SourceElementsContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitSourceElements(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitSourceElements(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -8526,6 +8960,14 @@ class ArrayLiteralContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitArrayLiteral(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitArrayLiteral(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -8582,6 +9024,14 @@ class ElementListContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitElementList(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -8619,6 +9069,14 @@ class ArrayElementContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitArrayElement(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitArrayElement(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -8680,6 +9138,14 @@ class PropertyExpressionAssignmentContext extends PropertyAssignmentContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitPropertyExpressionAssignment(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -8727,6 +9193,14 @@ class ComputedPropertyExpressionAssignmentContext extends PropertyAssignmentCont
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitComputedPropertyExpressionAssignment(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -8757,6 +9231,14 @@ class PropertyShorthandContext extends PropertyAssignmentContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitPropertyShorthand(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitPropertyShorthand(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -8803,6 +9285,14 @@ class PropertySetterContext extends PropertyAssignmentContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitPropertySetter(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -8841,6 +9331,14 @@ class PropertyGetterContext extends PropertyAssignmentContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitPropertyGetter(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitPropertyGetter(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -8893,6 +9391,14 @@ class FunctionPropertyContext extends PropertyAssignmentContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitFunctionProperty(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitFunctionProperty(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -8948,6 +9454,14 @@ class PropertyNameContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitPropertyName(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitPropertyName(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9012,6 +9526,14 @@ class ArgumentsContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitArguments(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9053,6 +9575,14 @@ class ArgumentContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitArgument(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitArgument(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9107,6 +9637,14 @@ class ExpressionSequenceContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitExpressionSequence(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitExpressionSequence(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9164,6 +9702,14 @@ class TemplateStringExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitTemplateStringExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9207,6 +9753,14 @@ class TernaryExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitTernaryExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9244,6 +9798,14 @@ class LogicalAndExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitLogicalAndExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitLogicalAndExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9285,6 +9847,14 @@ class PowerExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitPowerExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9317,6 +9887,14 @@ class PreIncrementExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitPreIncrementExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9343,6 +9921,14 @@ class ObjectLiteralExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitObjectLiteralExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitObjectLiteralExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9379,6 +9965,14 @@ class MetaExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitMetaExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitMetaExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9420,6 +10014,14 @@ class InExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitInExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9459,6 +10061,14 @@ class LogicalOrExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitLogicalOrExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9489,6 +10099,14 @@ class NotExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitNotExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitNotExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9523,6 +10141,14 @@ class PreDecreaseExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitPreDecreaseExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9553,6 +10179,14 @@ class ArgumentsExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitArgumentsExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitArgumentsExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9587,6 +10221,14 @@ class AwaitExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitAwaitExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9615,6 +10257,14 @@ class ThisExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitThisExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9641,6 +10291,14 @@ class FunctionExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitFunctionExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitFunctionExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9673,6 +10331,14 @@ class UnaryMinusExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitUnaryMinusExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitUnaryMinusExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9714,6 +10380,14 @@ class AssignmentExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitAssignmentExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9746,6 +10420,14 @@ class PostDecreaseExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitPostDecreaseExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9776,6 +10458,14 @@ class TypeofExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitTypeofExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitTypeofExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9817,6 +10507,14 @@ class InstanceofExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitInstanceofExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9849,6 +10547,14 @@ class UnaryPlusExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitUnaryPlusExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -9879,6 +10585,14 @@ class DeleteExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitDeleteExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitDeleteExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9919,6 +10633,14 @@ class ImportExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitImportExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitImportExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -9972,6 +10694,14 @@ class EqualityExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitEqualityExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10011,6 +10741,14 @@ class BitXOrExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitBitXOrExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10037,6 +10775,14 @@ class SuperExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitSuperExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitSuperExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10086,6 +10832,14 @@ class MultiplicativeExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitMultiplicativeExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10133,6 +10887,14 @@ class BitShiftExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitBitShiftExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10167,6 +10929,14 @@ class ParenthesizedExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitParenthesizedExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitParenthesizedExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10210,6 +10980,14 @@ class AdditiveExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitAdditiveExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitAdditiveExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10263,6 +11041,14 @@ class RelationalExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitRelationalExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10295,6 +11081,14 @@ class PostIncrementExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitPostIncrementExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10321,6 +11115,14 @@ class YieldExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitYieldExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitYieldExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10353,6 +11155,14 @@ class BitNotExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitBitNotExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitBitNotExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10391,6 +11201,14 @@ class NewExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitNewExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10419,6 +11237,14 @@ class LiteralExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitLiteralExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10445,6 +11271,14 @@ class ArrayLiteralExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitArrayLiteralExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitArrayLiteralExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10491,6 +11325,14 @@ class MemberDotExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitMemberDotExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10525,6 +11367,14 @@ class ClassExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitClassExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitClassExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10567,6 +11417,14 @@ class MemberIndexExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitMemberIndexExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10593,6 +11451,14 @@ class IdentifierExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitIdentifierExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitIdentifierExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10634,6 +11500,14 @@ class BitAndExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitBitAndExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10671,6 +11545,14 @@ class BitOrExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitBitOrExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitBitOrExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10712,6 +11594,14 @@ class AssignmentOperatorExpressionContext extends SingleExpressionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitAssignmentOperatorExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -10742,6 +11632,14 @@ class VoidExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitVoidExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitVoidExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10781,6 +11679,14 @@ class CoalesceExpressionContext extends SingleExpressionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitCoalesceExpression(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitCoalesceExpression(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10824,6 +11730,14 @@ class AssignableContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitAssignable(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitAssignable(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10886,6 +11800,14 @@ class ObjectLiteralContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitObjectLiteral(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitObjectLiteral(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -10963,6 +11885,14 @@ class AnonymousFunctionDeclContext extends AnonymousFunctionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitAnonymousFunctionDecl(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11003,6 +11933,14 @@ class ArrowFunctionContext extends AnonymousFunctionContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitArrowFunction(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11029,6 +11967,14 @@ class FunctionDeclContext extends AnonymousFunctionContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitFunctionDecl(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitFunctionDecl(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -11078,6 +12024,14 @@ class ArrowFunctionParametersContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitArrowFunctionParameters(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11115,6 +12069,14 @@ class ArrowFunctionBodyContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitArrowFunctionBody(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitArrowFunctionBody(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -11196,6 +12158,14 @@ class AssignmentOperatorContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitAssignmentOperator(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11255,6 +12225,14 @@ class LiteralContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitLiteral(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11306,6 +12284,14 @@ class NumericLiteralContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitNumericLiteral(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11353,6 +12339,14 @@ class BigintLiteralContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitBigintLiteral(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11390,6 +12384,14 @@ class GetterContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitGetter(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitGetter(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -11431,6 +12433,14 @@ class SetterContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitSetter(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11468,6 +12478,14 @@ class IdentifierNameContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitIdentifierName(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitIdentifierName(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -11513,6 +12531,14 @@ class IdentifierContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitIdentifier(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11554,6 +12580,14 @@ class ReservedWordContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitReservedWord(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitReservedWord(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 
@@ -11771,6 +12805,14 @@ class KeywordContext extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitKeyword(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11810,6 +12852,14 @@ class Let_Context extends antlr4.ParserRuleContext {
 		}
 	}
 
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitLet_(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
+	}
+
 
 }
 
@@ -11847,6 +12897,14 @@ class EosContext extends antlr4.ParserRuleContext {
 	    if(listener instanceof JavaScriptParserListener ) {
 	        listener.exitEos(this);
 		}
+	}
+
+	accept(visitor) {
+	    if ( visitor instanceof JavaScriptParserVisitor ) {
+	        return visitor.visitEos(this);
+	    } else {
+	        return visitor.visitChildren(this);
+	    }
 	}
 
 

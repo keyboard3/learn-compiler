@@ -1,6 +1,6 @@
 {
+  "type": "module",
   "dependencies": {
-    "type":"module",
     "antlr4": "^4.9.2"
   }
 }

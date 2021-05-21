@@ -6,3 +6,8 @@ antlr4@^4.9.2:
   version "4.9.2"
   resolved "https://registry.npm.taobao.org/antlr4/download/antlr4-4.9.2.tgz#abbc53d275954b1b6f4d8b3468b4a2cb258121fc"
   integrity sha1-q7xT0nWVSxtvTYs0aLSiyyWBIfw=
+
+type@module:
+  version "2.5.0"
+  resolved "https://registry.npm.taobao.org/type/download/type-2.5.0.tgz#0a2e78c2e77907b252abe5f298c1b01c63f0db3d"
+  integrity sha1-Ci54wud5B7JSq+XymMGwHGPw2z0=
