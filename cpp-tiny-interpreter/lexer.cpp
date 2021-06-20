@@ -1,8 +1,13 @@
 
 #include "models.h"
+#include "stack"
 
-list<Token *> tokenize(string code)
+stack<Token *> tokenize(string code)
 {
+  stack<char> codeStream;
+  for (auto chr : code)
+    codeStream.push(chr);
+
   char ch;
   auto skipLine = [&ch, &code]()
   {

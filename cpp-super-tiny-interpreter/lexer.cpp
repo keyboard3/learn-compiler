@@ -11,16 +11,16 @@ list<Token> tokenize(string code)
   list<Token> tokens;
   Token tempToken;
   DfaState state = DfaState::Initial;
-  auto transferState = [&tokens, &tempToken, &state](char ch)
+  auto transferState = [&](char ch)
   {
     tokens.push_back(tempToken);
     auto result = initToken(ch);
     tempToken = result.token;
     state = result.newState;
   };
-  auto forwardState = [&tempToken](char ch)
+  auto forwardState = [&](char ch)
   { tempToken.text += ch; };
-  auto idStateTransfer = [&forwardState, &transferState](char ch)
+  auto idStateTransfer = [&](char ch)
   {
     if (isalpha(ch) || isdigit(ch))
       forwardState(ch);
