@@ -1,13 +1,13 @@
 #include "string"
 #include "list"
-#include "map"
+#include "unordered_map"
 using namespace std;
 #ifndef models_h
 #define models_h
 
 enum class TokenType
 {
-  // EOF,//文件末尾 c++定义了EOF
+  DEFULT,//初始化默认值
   EOL,  //行尾
   SEMI, //语句末尾 ;s
   LB,
@@ -56,72 +56,20 @@ enum class TokenType
   NEW,      //new关键字 创建对象
   RESERVED, //保留关键字
 };
-map<string, TokenType> defineKeywords{
-    {"break", TokenType::BREAK},
-    {"case", TokenType::CASE},
-    {"continue", TokenType::CONTINUE},
-    {"default", TokenType::DEFAULT},
-    {"delete", TokenType::UNARYOP},
-    {"do", TokenType::DO},
-    {"else", TokenType::ELSE},
-    {"false", TokenType::PRIMARY},
-    {"for", TokenType::FOR},
-    {"function", TokenType::FUNCTION},
-    {"if", TokenType::IF},
-    {"in", TokenType::IN},
-    {"new", TokenType::NEW},
-    {"null", TokenType::PRIMARY},
-    {"return", TokenType::RETURN},
-    {"switch", TokenType::SWITCH},
-    {"this", TokenType::PRIMARY},
-    {"true", TokenType::PRIMARY},
-    {"typeof", TokenType::UNARYOP},
-    {"var", TokenType::VAR},
-    {"void", TokenType::UNARYOP},
-    {"while", TokenType::WHILE},
-    {"with", TokenType::WITH},
-    //R,SERVE_JAVA_KEYWORD}S
-    {"abstract", TokenType::RESERVED},
-    {"boolean", TokenType::RESERVED},
-    {"byte", TokenType::RESERVED},
-    {"catch", TokenType::RESERVED},
-    {"char", TokenType::RESERVED},
-    {"class", TokenType::RESERVED},
-    {"const", TokenType::RESERVED},
-    {"double", TokenType::RESERVED},
-    {"extends", TokenType::RESERVED},
-    {"final", TokenType::RESERVED},
-    {"finally", TokenType::RESERVED},
-    {"float", TokenType::RESERVED},
-    {"goto", TokenType::RESERVED},
-    {"implements", TokenType::RESERVED},
-    {"import", TokenType::RESERVED},
-    {"instanceof", TokenType::RESERVED},
-    {"int", TokenType::RESERVED},
-    {"interface", TokenType::RESERVED},
-    {"long", TokenType::RESERVED},
-    {"native", TokenType::RESERVED},
-    {"package", TokenType::RESERVED},
-    {"private", TokenType::RESERVED},
-    {"protected", TokenType::RESERVED},
-    {"public", TokenType::RESERVED},
-    {"short", TokenType::RESERVED},
-    {"static", TokenType::RESERVED},
-    {"super", TokenType::PRIMARY},
-    {"synchronized", TokenType::RESERVED},
-    {"throw", TokenType::RESERVED},
-    {"throws", TokenType::RESERVED},
-    {"transient", TokenType::RESERVED},
-    {"try", TokenType::RESERVED},
-    {"volatile", TokenType::RESERVED},
-};
 //token定义
 class Token
 {
 public:
   TokenType type;
   string text;
-  Token(TokenType type, string text) : type(type), text(text){};
+  Token(TokenType type, char chr) : type(type)
+  {
+    text += chr;
+  };
+  Token(TokenType type, string chr) : type(type)
+  {
+    text += chr;
+  };
 };
 //语法树的节点类型
 enum class ASTNodeType
@@ -161,7 +109,7 @@ enum class PrimaryFlag
   undefinedFlag,
   nullFlag
 };
-//解释器推导Primary存的值
+// //解释器推导Primary存的值
 class Entry
 {
 public:
@@ -191,9 +139,9 @@ class StackFrame
 {
 public:
   StackFrame *stackStackFrame;
-  map<string, Entry> localScope;
-  map<string, Entry> *globalScope;
-  StackFrame(StackFrame *stackStackFrame, map<string, Entry> *globalScope) : stackStackFrame(stackStackFrame), globalScope(globalScope){};
+  unordered_map<string, Entry *> localScope;
+  unordered_map<string, Entry *> *globalScope;
+  StackFrame(StackFrame *stackStackFrame, unordered_map<string, Entry *> *globalScope) : stackStackFrame(stackStackFrame), globalScope(globalScope){};
   Entry *get(string key);
   void declare(string name, Entry *value);
   void set(string name, Entry *value);
@@ -205,7 +153,7 @@ public:
   int maxFrameSize;
   list<StackFrame *> frames;
   StackFrame *frame;
-  map<string, Entry *> *globalScope;
+  unordered_map<string, Entry *> *globalScope;
   Context(int maxFrameSize) : maxFrameSize(maxFrameSize)
   {
     globalScope = {};

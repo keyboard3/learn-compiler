@@ -1,19 +1,28 @@
 
 #include "models.h"
+#include "iostream"
 #define ASSET_CHAR(cs) \
   if (cs.empty())      \
     return;
 #define GET_CHAR(cs) \
   if (cs.empty())    \
-    chr = NULL;      \
+    chr = EOF;       \
   else               \
     chr = cs.front();
-#define RETURN_TOKEN(tb, tp)           \
-  if (tb == nullptr || tb->type != tp) \
-    return;                            \
-  tokens.push_back(tb);                \
-  tb = nullptr;                        \
-  return;
+#define GET_CHAR_POP(cs) \
+  {                      \
+    cs.pop_front();      \
+    GET_CHAR(cs)         \
+  }
+
+#define RETURN_TOKEN(tb, tp)             \
+  {                                      \
+    if (tb == nullptr || tb->type != tp) \
+      return;                            \
+    tokens.push_back(tb);                \
+    tb = nullptr;                        \
+    return;                              \
+  }
 
 list<Token *> tokenize(string code)
 {
@@ -28,20 +37,14 @@ list<Token *> tokenize(string code)
     ASSET_CHAR(cs);
     char chr = cs.front();
     while (chr == EOF || chr == '\n')
-    {
-      cs.pop_front();
-      GET_CHAR(cs);
-    }
+      GET_CHAR_POP(cs);
   };
   auto clearEmpty = [&]()
   {
     ASSET_CHAR(cs);
     char chr = cs.front();
     while (isspace(chr))
-    {
-      cs.pop_front();
-      GET_CHAR(cs);
-    };
+      GET_CHAR_POP(cs);
   };
   auto matchNameAndKeyword = [&]()
   {
@@ -49,11 +52,10 @@ list<Token *> tokenize(string code)
     char chr = cs.front();
     while (isalpha(chr) || chr == '_' || chr == '$')
     {
-      cs.pop_front();
       if (tokenBuffer == nullptr)
         tokenBuffer = new Token(TokenType::NAME, "");
       tokenBuffer->text += chr;
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
     }
     RETURN_TOKEN(tokenBuffer, TokenType::NAME);
   };
@@ -61,40 +63,43 @@ list<Token *> tokenize(string code)
   {
     ASSET_CHAR(cs);
     char chr = cs.front();
+
     if (isdigit(chr))
     {
       int base = 10;
-      cs.pop_front();
-      tokenBuffer = new Token(TokenType::NUMBER, to_string(chr));
+      tokenBuffer = new Token(TokenType::NUMBER, chr);
       if (cs.empty())
         RETURN_TOKEN(tokenBuffer, TokenType::NUMBER);
       //8进制
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
       if (chr == 'x')
       {
         tokenBuffer->text += chr;
         base = 16;
-        GET_CHAR(cs);
+        GET_CHAR_POP(cs);
       }
       while (isdigit(chr))
-        GET_CHAR(cs);
+      {
+        tokenBuffer->text += chr;
+        GET_CHAR_POP(cs);
+      }
       if (base == 10 && (chr == '.' || tolower(chr) == 'e'))
       {
         if (chr == '.')
           do
           {
             tokenBuffer->text += chr;
-            GET_CHAR(cs);
+            GET_CHAR_POP(cs);
           } while (isdigit(chr));
         //读取科学技术法
         if (tolower(chr) == 'e')
         {
           tokenBuffer->text += chr;
-          GET_CHAR(cs);
+          GET_CHAR_POP(cs);
           if (chr == '+' || chr == '-')
           {
             tokenBuffer->text += chr;
-            GET_CHAR(cs);
+            GET_CHAR_POP(cs);
           }
           if (!isdigit(chr))
           {
@@ -104,7 +109,7 @@ list<Token *> tokenize(string code)
             do
             {
               tokenBuffer->text += chr;
-              GET_CHAR(cs);
+              GET_CHAR_POP(cs);
             } while (isdigit(chr));
         }
       }
@@ -114,12 +119,11 @@ list<Token *> tokenize(string code)
   auto matchString = [&]()
   {
     ASSET_CHAR(cs);
-    char chr;
-    GET_CHAR(cs);
+    char chr = cs.front();
     if (chr != '"' && chr != '\'')
       return;
     char prevChr = chr;
-    GET_CHAR(cs);
+    GET_CHAR_POP(cs);
     tokenBuffer = new Token(TokenType::STRING, "");
     while (prevChr != chr)
     {
@@ -129,7 +133,7 @@ list<Token *> tokenize(string code)
       };
       if (chr == '\\') //转义字符
       {
-        GET_CHAR(cs);
+        GET_CHAR_POP(cs);
         switch (chr)
         {
         case 'b':
@@ -158,17 +162,17 @@ list<Token *> tokenize(string code)
         }
       }
       tokenBuffer->text += chr;
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
     }
     RETURN_TOKEN(tokenBuffer, TokenType::STRING);
   };
   auto matchOther = [&]()
   {
     ASSET_CHAR(cs);
+    string preChr(1, cs.front());
     char chr;
-    GET_CHAR(cs);
-    TokenType tt;
-    switch (chr)
+    TokenType tt = TokenType::DEFULT;
+    switch (preChr[0])
     {
     case '\n':
       tt = TokenType::EOL;
@@ -207,93 +211,87 @@ list<Token *> tokenize(string code)
       tt = TokenType::DOT;
       break;
     case '|':
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
+      preChr += chr;
       if (chr == '|')
         tt = TokenType::OR;
       else if (chr == '=')
         tt = TokenType::ASSIGN;
       else
-      {
-        tt = TokenType::BITOR;
-        cs.push_front(chr);
-      }
+        tt = TokenType::BITOR, preChr.pop_back(), cs.push_front(chr);
       break;
     case '^':
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
+      preChr += chr;
       if (chr == '=')
         tt = TokenType::ASSIGN;
       else
-      {
-        tt = TokenType::BITXOR;
-        cs.push_front(chr);
-      }
+        tt = TokenType::BITXOR, preChr.pop_back(), cs.push_front(chr);
       break;
     case '&':
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
+      preChr += chr;
       if (chr == '&')
         tt = TokenType::AND;
       else if (chr == '=')
         tt = TokenType::ASSIGN;
       else
-      {
-        tt = TokenType::BITAND;
-        cs.push_front(chr);
-      }
+        tt = TokenType::BITAND, preChr.pop_back(), cs.push_front(chr);
       break;
     case '=':
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
+      preChr += chr;
       if (chr == '=')
         tt = TokenType::EQOP;
       else
-      {
-        tt = TokenType::ASSIGN;
-        cs.push_front(chr);
-      }
+        tt = TokenType::ASSIGN, preChr.pop_back(), cs.push_front(chr);
       break;
     case '!':
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
+      preChr += chr;
       if (chr == '=')
         tt = TokenType::EQOP;
       else
-      {
-        tt = TokenType::UNARYOP;
-        cs.push_front(chr);
-      }
+        tt = TokenType::UNARYOP, preChr.pop_back(), cs.push_front(chr);
       break;
     case '<':
-      GET_CHAR(cs);
-      char preChr = chr;
+      GET_CHAR_POP(cs);
+      preChr += chr;
       if (chr == '<')
       {
-        GET_CHAR(cs);
+        GET_CHAR_POP(cs);
+        preChr += chr;
         tt = chr == '=' ? TokenType::ASSIGN : TokenType::SHOP;
+        if (chr != '=')
+          preChr.pop_back(), cs.push_front(chr);
       }
       else
-      {
-        tt = TokenType::RELOP;
-        cs.push_front(preChr);
-      }
+        tt = TokenType::RELOP, preChr.pop_back(), cs.push_front(chr);
       break;
     case '>':
-      GET_CHAR(cs);
-      char preChr = chr;
+      GET_CHAR_POP(cs);
+      preChr += chr;
       if (chr == '>')
       {
-        GET_CHAR(cs);
+        GET_CHAR_POP(cs);
+        preChr += chr;
         tt = chr == '=' ? TokenType::ASSIGN : TokenType::SHOP;
+        if (chr != '=')
+          preChr.pop_back(), cs.push_front(chr);
       }
       else
-      {
-        tt = TokenType::RELOP;
-        cs.push_front(preChr);
-      }
+        tt = TokenType::RELOP, preChr.pop_back();
       break;
     case '*':
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
+      preChr += chr;
+      if (chr != '=')
+        preChr.pop_back(), cs.push_front(chr);
+
       tt = chr == '=' ? TokenType::ASSIGN : TokenType::MULOP;
       break;
     case '/':
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
       if (chr == '/') //单行注释
       {
         skipline();
@@ -304,25 +302,32 @@ list<Token *> tokenize(string code)
       //多行注释
       if (chr == '*')
       {
-        GET_CHAR(cs);
+        GET_CHAR_POP(cs);
         while (chr != EOF)
         {
           if (chr == '*')
           {
-            GET_CHAR(cs);
+            GET_CHAR_POP(cs);
             if (chr == '/')
               return;
           }
           else
-            GET_CHAR(cs);
+            GET_CHAR_POP(cs);
         }
         if (chr == EOF)
           return;
       }
+      preChr += chr;
+      if (chr != '=')
+        preChr.pop_back(), cs.push_front(chr);
+
       tt = chr == '=' ? TokenType::ASSIGN : TokenType::MULOP;
       break;
     case '%':
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
+      preChr += chr;
+      if (chr != '=')
+        preChr.pop_back(), cs.push_front(chr);
       tt = chr == '=' ? TokenType::ASSIGN : TokenType::MULOP;
       break;
     case '~':
@@ -330,34 +335,40 @@ list<Token *> tokenize(string code)
       break;
     case '+':
     case '-':
-      if (chr == '-')
+      if (preChr == "-")
         tt = TokenType::MINUS;
-      else if (chr == '+')
+      else if (preChr == "+")
         tt = TokenType::PLUS;
-      GET_CHAR(cs);
+      GET_CHAR_POP(cs);
+      preChr += chr;
       if (chr == '=')
         tt = TokenType::ASSIGN;
       else if (chr == '-')
         tt = TokenType::INCOP;
-      else if (tt == TokenType::MINUS || tt == TokenType::PLUS)
-      {
-        cs.push_front(chr);
-      }
+      else
+        preChr.pop_back(), cs.push_front(chr);
       break;
     default:
       return;
     }
+    if (tt != TokenType::DEFAULT)
+    {
+      cs.pop_front();
+      tokenBuffer = new Token(tt, preChr);
+      RETURN_TOKEN(tokenBuffer, tt);
+    }
   };
 
-  char chr = NULL;
+  char chr = EOF;
   GET_CHAR(cs);
-  while (chr != NULL)
+  while (!cs.empty())
   {
     clearEmpty();
     matchNameAndKeyword();
     matchNumber();
     matchString();
     matchOther();
+    GET_CHAR(cs);
   }
   return tokens;
 }
