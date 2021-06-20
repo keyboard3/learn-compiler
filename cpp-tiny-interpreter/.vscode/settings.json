@@ -63,6 +63,8 @@
     "list": "cpp",
     "map": "cpp",
     "__tree": "cpp",
-    "stack": "cpp"
+    "stack": "cpp",
+    "deque": "cpp",
+    "__functional_base_03": "cpp"
   }
 }

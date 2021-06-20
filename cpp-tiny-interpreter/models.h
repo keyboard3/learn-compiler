@@ -2,9 +2,9 @@
 #include "list"
 #include "map"
 using namespace std;
-
 #ifndef models_h
 #define models_h
+
 enum class TokenType
 {
   // EOF,//文件末尾 c++定义了EOF
@@ -152,35 +152,14 @@ public:
   void addChild(ASTNode node);
   void dumpAST(string indent);
 };
-//执行上下文
-class Context
+enum class PrimaryFlag
 {
-public:
-  int maxFrameSize;
-  list<StackFrame *> frames;
-  StackFrame *frame;
-  map<string, Entry*> *globalScope;
-  Context(int maxFrameSize) : maxFrameSize(maxFrameSize)
-  {
-    globalScope = {};
-  };
-  void pushFrame(StackFrame *frame);
-  StackFrame *popFrame();
-  Entry *get(string name);
-  void set(string name, Entry *value);
-  void declare(string name, Entry *value);
-};
-//栈帧
-class StackFrame
-{
-public:
-  StackFrame *stackStackFrame;
-  map<string, Entry> localScope;
-  map<string, Entry> *globalScope;
-  StackFrame(StackFrame *stackStackFrame, map<string, Entry> *globalScope) : stackStackFrame(stackStackFrame), globalScope(globalScope){};
-  Entry *get(string key);
-  void declare(string name, Entry *value);
-  void set(string name, Entry *value);
+  intFlag,
+  doubleFlag,
+  stringFlag,
+  boolFlag,
+  undefinedFlag,
+  nullFlag
 };
 //解释器推导Primary存的值
 class Entry
@@ -200,15 +179,6 @@ public:
   string getString();
   bool getBool();
 };
-enum class PrimaryFlag
-{
-  intFlag,
-  doubleFlag,
-  stringFlag,
-  boolFlag,
-  undefinedFlag,
-  nullFlag
-};
 class TokenStream
 {
 public:
@@ -216,4 +186,35 @@ public:
   Token *ptr;
   TokenStream(list<Token> &tokens) : tokens(tokens){};
 };
+//栈帧
+class StackFrame
+{
+public:
+  StackFrame *stackStackFrame;
+  map<string, Entry> localScope;
+  map<string, Entry> *globalScope;
+  StackFrame(StackFrame *stackStackFrame, map<string, Entry> *globalScope) : stackStackFrame(stackStackFrame), globalScope(globalScope){};
+  Entry *get(string key);
+  void declare(string name, Entry *value);
+  void set(string name, Entry *value);
+};
+//执行上下文
+class Context
+{
+public:
+  int maxFrameSize;
+  list<StackFrame *> frames;
+  StackFrame *frame;
+  map<string, Entry *> *globalScope;
+  Context(int maxFrameSize) : maxFrameSize(maxFrameSize)
+  {
+    globalScope = {};
+  };
+  void pushFrame(StackFrame *frame);
+  StackFrame *popFrame();
+  Entry *get(string name);
+  void set(string name, Entry *value);
+  void declare(string name, Entry *value);
+};
+
 #endif
