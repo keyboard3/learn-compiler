@@ -7,9 +7,9 @@ using namespace std;
 
 enum class TokenType
 {
-  DEFULT,//初始化默认值
-  EOL,  //行尾
-  SEMI, //语句末尾 ;s
+  DEFULT, //初始化默认值
+  EOL,    //行尾
+  SEMI,   //语句末尾 ;s
   LB,
   RB, //数组标识 []
   LC,
@@ -94,10 +94,10 @@ class ASTNode
 {
 public:
   ASTNodeType type;
-  Token *token;
-  list<ASTNode> children;
-  ASTNode(ASTNodeType type, Token *token) : type(type), token(token){};
-  void addChild(ASTNode node);
+  string text;
+  list<ASTNode *> children;
+  ASTNode(ASTNodeType type, string text) : type(type), text(text){};
+  void addChild(ASTNode *node);
   void dumpAST(string indent);
 };
 enum class PrimaryFlag

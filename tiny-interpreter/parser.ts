@@ -116,7 +116,7 @@ function blockStatement(ts: TokenStream): ASTNode | null {
 }
 
 /**
- * 表达式语句 returnStatement :: return statement?
+ * 表达式语句 returnStatement :: return expressionStatement?
  */
 function returnStatement(ts: TokenStream): ASTNode | null {
   let token = ts.getToken();
@@ -134,7 +134,7 @@ function returnStatement(ts: TokenStream): ASTNode | null {
  * 表达式语句 expressionStatement :: additiveExpression | callExpression
  */
 function expressionStatement(ts: TokenStream): ASTNode | null {
-  return callExpression(ts) || unaryExpression(ts) || BinaryExpression(ts);
+  return callExpression(ts) || unaryExpression(ts) || binaryExpression(ts);
 }
 
 /**
@@ -156,7 +156,7 @@ function unaryExpression(ts: TokenStream) {
 /**
  * 二元表达式 BinaryExpression :: [<<,>>,==,!=,<,<=,>,>=,additive]
  */
-function BinaryExpression(ts: TokenStream) {
+function binaryExpression(ts: TokenStream) {
   let child = additive(ts);
   if (!child) return null;
   if (child.type == ASTNodeType.Binary) return child;
@@ -186,7 +186,7 @@ function BinaryExpression(ts: TokenStream) {
 
 /**
  * 赋值语句
- * assignment :: Identifier 'assign' expressionStatement;
+ * assignment :: Identifier '=' expressionStatement;
  * @param tokens
  */
 function assignmentStatement(ts: TokenStream): ASTNode | null {
@@ -211,7 +211,7 @@ function assignmentStatement(ts: TokenStream): ASTNode | null {
 
 /**
  * var变量声明语句
- * varDeclaration :: 'int' Id ( '=' expressionStatement)?
+ * varDeclaration :: 'var' Id ( '=' expressionStatement)?
  * @param tokens
  */
 function varDeclare(ts: TokenStream): ASTNode | null {

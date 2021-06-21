@@ -2,16 +2,16 @@
 #include "iostream"
 inline string ToString(ASTNodeType v);
 
-void ASTNode::addChild(ASTNode node)
+void ASTNode::addChild(ASTNode *node)
 {
   children.push_back(node);
 }
 void ASTNode::dumpAST(string indent)
 {
-  cout << indent << ToString(type) << " " << token->text << endl;
-  for (list<ASTNode>::iterator iter = children.begin(); iter != children.end(); ++iter)
+  cout << indent << ToString(type) << " " << text << endl;
+  for (auto child : children)
   {
-    iter->dumpAST(indent + indent);
+    child->dumpAST(indent + indent);
   }
 }
 
