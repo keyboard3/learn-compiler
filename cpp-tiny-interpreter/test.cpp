@@ -3,9 +3,9 @@
 #include "iostream"
 int main()
 {
-  auto tokens = tokenize("int a=13;a+=3;");
+  auto tokens = tokenize("var a=1*3+4*4");
   for (auto item : tokens)
-    cout << item->text << endl;
+    cout << "token" << item->text << ":" << (long)(item->type) << endl;
   auto node = parser(tokens);
   node->dumpAST(" ");
 }

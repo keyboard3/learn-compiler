@@ -130,9 +130,9 @@ public:
 class TokenStream
 {
 public:
-  list<Token> &tokens;
+  list<Token *> &tokens;
   Token *ptr;
-  TokenStream(list<Token> &tokens) : tokens(tokens){};
+  TokenStream(list<Token *> &tokens) : tokens(tokens){};
 };
 //栈帧
 class StackFrame
@@ -164,5 +164,5 @@ public:
   void set(string name, Entry *value);
   void declare(string name, Entry *value);
 };
-
+extern unordered_map<string, TokenType> defineKeywords;
 #endif

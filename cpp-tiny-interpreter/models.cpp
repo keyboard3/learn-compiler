@@ -103,7 +103,7 @@ void Context::declare(string name, Entry *value)
 }
 //todo 补充Entry的方法
 
-unordered_map<string, TokenType> defineKeywords{
+unordered_map<string, TokenType> defineKeywords = {
     {"break", TokenType::BREAK},
     {"case", TokenType::CASE},
     {"continue", TokenType::CONTINUE},

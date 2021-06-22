@@ -1,5 +1,6 @@
 #include "models.h"
 #include "vector"
+#include "iostream"
 #define ASSET_TS(tokens, tt)      \
   if (tokens.empty())             \
     return nullptr;               \
@@ -9,6 +10,7 @@
   !tokens.empty() && tokens.front()->type == tt
 
 vector<long> getRootFuncs();
+ASTNode *expressionStatement(list<Token *> &tokens);
 ASTNode *statement(list<Token *> &tokens);
 typedef ASTNode *(*Statement)(list<Token *> &); //动态表达式函数类型定义
 ASTNode *parser(list<Token *> &tokens)
@@ -47,6 +49,7 @@ ASTNode *varDeclare(list<Token *> &tokens)
   tokens.pop_front();
   if (!IS_TYPE(tokens, TokenType::ASSIGN))
     return node;
+  tokens.pop_front();
   auto child = expressionStatement(tokens);
   if (child == nullptr)
     throw "invalide variable initialization, expecting an expression";
@@ -68,6 +71,7 @@ ASTNode *assignmentStatement(list<Token *> &tokens)
     tokens.push_front(nameToken);
     return nullptr;
   }
+  tokens.pop_front();
   auto node = new ASTNode(ASTNodeType::AssignmentStmt, nameToken->text);
   auto child = expressionStatement(tokens);
   if (child != nullptr)
@@ -83,18 +87,18 @@ ASTNode *primary(list<Token *> &tokens)
 {
   ASTNode *node = nullptr;
   if (IS_TYPE(tokens, TokenType::PRIMARY))
-    node = new ASTNode(TokenType::PRIMARY, tokens.front()->text);
-  if (IS_TYPE(tokens, ASTNodeType::NumberLiteral))
-    node = new ASTNode(TokenType::NumberLiteral, tokens.front()->text);
-  if (IS_TYPE(tokens, ASTNodeType::Identifier))
-    node = new ASTNode(TokenType::Identifier, tokens.front()->text);
+    node = new ASTNode(ASTNodeType::Primary, tokens.front()->text);
+  if (IS_TYPE(tokens, TokenType::NUMBER))
+    node = new ASTNode(ASTNodeType::NumberLiteral, tokens.front()->text);
+  if (IS_TYPE(tokens, TokenType::NAME))
+    node = new ASTNode(ASTNodeType::Identifier, tokens.front()->text);
   if (IS_TYPE(tokens, TokenType::LP))
   {
     tokens.pop_front();
     node = expressionStatement(tokens);
     if (node == nullptr)
       throw "expecting an additive expression inside parenthesis";
-    if (tokens.front() != TokenType::RP)
+    if (tokens.front()->type != TokenType::RP)
       throw "expecting right parenthesis";
   }
   if (node != nullptr)
@@ -117,14 +121,11 @@ ASTNode *callExpression(list<Token *> &tokens)
   tokens.pop_front();
   auto node = new ASTNode(ASTNodeType::Call, nameToken->text);
   if (IS_TYPE(tokens, TokenType::RP))
-  {
     tokens.pop_front();
-    return node;
-  }
   auto child = primary(tokens);
   if (child != nullptr)
     node->addChild(child);
-  while (!tokens.empty() && tokens.front() != ASTNodeType::RP)
+  while (!tokens.empty() && tokens.front()->type != TokenType::RP)
   {
     auto child = primary(tokens);
     if (child != nullptr)
@@ -140,8 +141,9 @@ ASTNode *callExpression(list<Token *> &tokens)
  */
 ASTNode *unaryExpression(list<Token *> &tokens)
 {
-  ASSET_TS(tokens, ASTNodeType::Unary);
+  ASSET_TS(tokens, TokenType::UNARYOP);
   auto node = new ASTNode(ASTNodeType::Unary, tokens.front()->text);
+  tokens.pop_front();
   auto child = primary(tokens);
   if (child == nullptr)
     throw "mising primary";
@@ -172,7 +174,7 @@ ASTNode *multiplicative(list<Token *> &tokens)
     node = new ASTNode(ASTNodeType::Binary, opToken->text);
     node->addChild(child1);
     node->addChild(child2);
-    chil1 = node;
+    child1 = node;
   }
   return node;
 }
@@ -210,10 +212,12 @@ ASTNode *additive(list<Token *> &tokens)
 ASTNode *binaryExpression(list<Token *> &tokens)
 {
   auto child = additive(tokens);
-  if (child == nullptr || child == ASTNodeType::Binary)
+  if (tokens.empty() || child == nullptr || child->type == ASTNodeType::Binary)
     return child;
+
+  auto type = tokens.front()->type;
   //说明 child 是普通的 primary 可与后面的结合成二元表达式
-  switch (tokens.front()->type)
+  switch (type)
   {
   case TokenType::SHOP:   //<< >>
   case TokenType::RELOP:  //< > <= >=
@@ -223,6 +227,7 @@ ASTNode *binaryExpression(list<Token *> &tokens)
   case TokenType::BITOR:  // |
   case TokenType::BITXOR: // ^
   case TokenType::BITAND: // &
+  {
     auto opToken = tokens.front();
     tokens.pop_front();
     auto child2 = additive(tokens);
@@ -232,23 +237,25 @@ ASTNode *binaryExpression(list<Token *> &tokens)
     node->addChild(child);
     node->addChild(child2);
     return node;
-  default:
-    return child;
   }
+  default:
+    break;
+  }
+  return child;
 };
 ASTNode *expressionStatement(list<Token *> &tokens)
 {
   vector<long> funcs = {
       (long)&callExpression,
       (long)&unaryExpression,
-      (long)&binaryExpression,
-  };
+      (long)&binaryExpression};
   for (auto func : funcs)
   {
     auto node = ((Statement)func)(tokens);
     if (node != nullptr)
       return node;
   }
+  return nullptr;
 };
 /**
  * 块级语句 blackStatement :: '{' (statement)* '}'
@@ -265,7 +272,7 @@ ASTNode *blockStatement(list<Token *> &tokens)
       tokens.pop_front();
       return node;
     }
-    auto child = statement();
+    auto child = statement(tokens);
     if (child != nullptr)
       node->addChild(child);
   }

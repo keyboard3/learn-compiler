@@ -4,6 +4,7 @@
 #define ASSET_CHAR(cs) \
   if (cs.empty())      \
     return;
+
 #define GET_CHAR(cs) \
   if (cs.empty())    \
     chr = EOF;       \
@@ -15,23 +16,28 @@
     GET_CHAR(cs)         \
   }
 
-#define RETURN_TOKEN(tb, tp)             \
-  {                                      \
-    if (tb == nullptr || tb->type != tp) \
-      return;                            \
-    tokens.push_back(tb);                \
-    tb = nullptr;                        \
-    return;                              \
+#define RETURN_TOKEN(tb, tp)                     \
+  {                                              \
+    if (tb->type != tp)                          \
+      return;                                    \
+    tokens.push_back(new Token(tb->type, tb->text)); \
+    resetBuffer();                               \
+    return;                                      \
   }
 
 list<Token *> tokenize(string code)
 {
   list<char> cs;
   list<Token *> tokens;
-  Token *tokenBuffer = nullptr;
+  Token *tokenBuffer = new Token(TokenType::DEFAULT, "");
   for (auto chr : code)
     cs.push_back(chr);
 
+  auto resetBuffer = [&]()
+  {
+    tokenBuffer->text = "";
+    tokenBuffer->type = TokenType::DEFAULT;
+  };
   auto skipline = [&]()
   {
     ASSET_CHAR(cs);
@@ -52,10 +58,16 @@ list<Token *> tokenize(string code)
     char chr = cs.front();
     while (isalpha(chr) || chr == '_' || chr == '$')
     {
-      if (tokenBuffer == nullptr)
+      if (tokenBuffer->type == TokenType::DEFAULT)
         tokenBuffer = new Token(TokenType::NAME, "");
       tokenBuffer->text += chr;
       GET_CHAR_POP(cs);
+    }
+    if (defineKeywords.find(tokenBuffer->text) != defineKeywords.end())
+    {
+      tokenBuffer->type = defineKeywords[tokenBuffer->text];
+      RETURN_TOKEN(tokenBuffer, defineKeywords[tokenBuffer->text]);
+      return;
     }
     RETURN_TOKEN(tokenBuffer, TokenType::NAME);
   };
@@ -295,7 +307,7 @@ list<Token *> tokenize(string code)
       if (chr == '/') //单行注释
       {
         skipline();
-        tokenBuffer = nullptr;
+        resetBuffer();
         return;
       }
       GET_CHAR(cs);
