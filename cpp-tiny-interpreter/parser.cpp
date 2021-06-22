@@ -7,7 +7,9 @@
   if (tokens.front()->type != tt) \
     return nullptr;
 #define IS_TYPE(tokens, tt) \
-  !tokens.empty() && tokens.front()->type == tt
+  (!tokens.empty() && tokens.front()->type == tt)
+#define LOG_FRONT(tag, tokens) \
+  cout << tag << " " << (tokens.empty() ? "" : tokens.front()->text) << endl;
 
 vector<long> getRootFuncs();
 ASTNode *expressionStatement(list<Token *> &tokens);
@@ -19,16 +21,20 @@ ASTNode *parser(list<Token *> &tokens)
   while (!tokens.empty())
   {
     auto child = statement(tokens);
-    rootNode->addChild(child);
+    if (child != nullptr)
+      rootNode->addChild(child);
   }
   return rootNode;
 }
 ASTNode *statement(list<Token *> &tokens)
 {
+  LOG_FRONT("statement", tokens);
   auto funclist = getRootFuncs();
   for (auto func : funclist)
   {
     auto child = ((Statement)func)(tokens);
+    if (!tokens.empty() && tokens.front()->type == TokenType::SEMI)
+      tokens.pop_front();
     if (child != nullptr)
       return child;
   };
@@ -41,9 +47,10 @@ ASTNode *statement(list<Token *> &tokens)
  */
 ASTNode *varDeclare(list<Token *> &tokens)
 {
+  LOG_FRONT("varDeclare", tokens);
   ASSET_TS(tokens, TokenType::VAR);
   tokens.pop_front();
-  if (!IS_TYPE(tokens, TokenType::VAR))
+  if (!IS_TYPE(tokens, TokenType::NAME))
     throw "variable name expected";
   auto node = new ASTNode(ASTNodeType::VarDeclaration, tokens.front()->text);
   tokens.pop_front();
@@ -63,6 +70,7 @@ ASTNode *varDeclare(list<Token *> &tokens)
  */
 ASTNode *assignmentStatement(list<Token *> &tokens)
 {
+  LOG_FRONT("assignmentStatement", tokens);
   ASSET_TS(tokens, TokenType::NAME);
   auto nameToken = tokens.front();
   tokens.pop_front();
@@ -85,6 +93,7 @@ ASTNode *assignmentStatement(list<Token *> &tokens)
  */
 ASTNode *primary(list<Token *> &tokens)
 {
+  LOG_FRONT("primary", tokens);
   ASTNode *node = nullptr;
   if (IS_TYPE(tokens, TokenType::PRIMARY))
     node = new ASTNode(ASTNodeType::Primary, tokens.front()->text);
@@ -110,6 +119,7 @@ ASTNode *primary(list<Token *> &tokens)
  */
 ASTNode *callExpression(list<Token *> &tokens)
 {
+  LOG_FRONT("callExpression", tokens);
   ASSET_TS(tokens, TokenType::NAME);
   auto nameToken = tokens.front();
   tokens.pop_front();
@@ -141,6 +151,7 @@ ASTNode *callExpression(list<Token *> &tokens)
  */
 ASTNode *unaryExpression(list<Token *> &tokens)
 {
+  LOG_FRONT("unaryExpression", tokens);
   ASSET_TS(tokens, TokenType::UNARYOP);
   auto node = new ASTNode(ASTNodeType::Unary, tokens.front()->text);
   tokens.pop_front();
@@ -157,6 +168,7 @@ ASTNode *unaryExpression(list<Token *> &tokens)
  */
 ASTNode *multiplicative(list<Token *> &tokens)
 {
+  LOG_FRONT("multiplicative", tokens);
   auto child1 = primary(tokens);
   if (child1 == nullptr)
     return child1;
@@ -185,6 +197,7 @@ ASTNode *multiplicative(list<Token *> &tokens)
  */
 ASTNode *additive(list<Token *> &tokens)
 {
+  LOG_FRONT("additive", tokens);
   auto child1 = multiplicative(tokens);
   if (child1 == nullptr)
     return child1;
@@ -193,7 +206,7 @@ ASTNode *additive(list<Token *> &tokens)
   while (!tokens.empty())
   {
     auto opToken = tokens.front();
-    if (!IS_TYPE(tokens, TokenType::PLUS) || !IS_TYPE(tokens, TokenType::MINUS))
+    if (!IS_TYPE(tokens, TokenType::PLUS) && !IS_TYPE(tokens, TokenType::MINUS))
       break;
     tokens.pop_front();
     auto child2 = multiplicative(tokens);
@@ -211,6 +224,7 @@ ASTNode *additive(list<Token *> &tokens)
  */
 ASTNode *binaryExpression(list<Token *> &tokens)
 {
+  LOG_FRONT("binaryExpression", tokens);
   auto child = additive(tokens);
   if (tokens.empty() || child == nullptr || child->type == ASTNodeType::Binary)
     return child;
@@ -245,6 +259,7 @@ ASTNode *binaryExpression(list<Token *> &tokens)
 };
 ASTNode *expressionStatement(list<Token *> &tokens)
 {
+  LOG_FRONT("expressionStatement", tokens);
   vector<long> funcs = {
       (long)&callExpression,
       (long)&unaryExpression,
@@ -262,6 +277,7 @@ ASTNode *expressionStatement(list<Token *> &tokens)
  */
 ASTNode *blockStatement(list<Token *> &tokens)
 {
+  LOG_FRONT("blockStatement", tokens);
   ASSET_TS(tokens, TokenType::LC);
   auto node = new ASTNode(ASTNodeType::Block, "{}");
   tokens.pop_front();
@@ -283,6 +299,7 @@ ASTNode *blockStatement(list<Token *> &tokens)
  */
 ASTNode *returnStatement(list<Token *> &tokens)
 {
+  LOG_FRONT("returnStatement", tokens);
   ASSET_TS(tokens, TokenType::RETURN);
   auto node = new ASTNode(ASTNodeType::Return, tokens.front()->text);
   tokens.pop_front();

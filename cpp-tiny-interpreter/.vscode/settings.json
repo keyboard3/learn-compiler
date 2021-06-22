@@ -26,6 +26,7 @@
     "__split_buffer": "cpp",
     "array": "cpp",
     "ostream": "cpp",
-    "__hash_table": "cpp"
+    "__hash_table": "cpp",
+    "deque": "cpp"
   }
 }

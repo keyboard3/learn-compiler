@@ -10,9 +10,7 @@ void ASTNode::dumpAST(string indent)
 {
   cout << indent << ToString(type) << " " << text << endl;
   for (auto child : children)
-  {
     child->dumpAST(indent + indent);
-  }
 }
 
 unordered_map<ASTNodeType, string> strTypeMap = {
