@@ -27,6 +27,8 @@
     "array": "cpp",
     "ostream": "cpp",
     "__hash_table": "cpp",
-    "deque": "cpp"
+    "deque": "cpp",
+    "__functional_03": "cpp",
+    "bitset": "cpp"
   }
 }

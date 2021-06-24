@@ -9,7 +9,7 @@ enum class TokenType
 {
   DEFULT, //初始化默认值
   EOL,    //行尾
-  SEMI,   //语句末尾 ;s
+  SEMI,   //语句末尾 ;
   LB,
   RB, //数组标识 []
   LC,
@@ -95,6 +95,7 @@ class ASTNode
 public:
   ASTNodeType type;
   string text;
+  vector<string> params;
   list<ASTNode *> children;
   ASTNode(ASTNodeType type, string text) : type(type), text(text){};
   void addChild(ASTNode *node);
@@ -102,28 +103,32 @@ public:
 };
 enum class PrimaryFlag
 {
-  intFlag,
-  doubleFlag,
+  numberFlag,
   stringFlag,
   boolFlag,
   undefinedFlag,
-  nullFlag
+  methodFlag
+};
+struct Method
+{
+  StackFrame *parentFrame;
+  list<ASTNode *> children;
+  long call; //函数指针
 };
 // //解释器推导Primary存的值
 class Entry
 {
 public:
-  int intData;
-  double doubleData;
+  double numberData;
   string stringData;
   bool boolData;
+  Method *methodData;
   PrimaryFlag flag;
-  bool isInt();
-  bool isDouble();
+  bool isNumber();
   bool isString();
   bool isBool();
-  int getInt();
-  double getDouble();
+  bool isUndefined();
+  double getNumber();
   string getString();
   bool getBool();
 };

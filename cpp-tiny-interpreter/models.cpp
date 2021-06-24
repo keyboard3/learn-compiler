@@ -99,7 +99,51 @@ void Context::declare(string name, Entry *value)
   globalScope->erase(name);
   globalScope->emplace(name, value);
 }
-//todo 补充Entry的方法
+//Entry类
+bool Entry::isNumber()
+{
+  return flag == PrimaryFlag::numberFlag;
+}
+bool Entry::isString()
+{
+  return flag == PrimaryFlag::stringFlag;
+}
+bool Entry::isBool()
+{
+  return flag == PrimaryFlag::boolFlag;
+}
+bool Entry::isUndefined()
+{
+  return flag == PrimaryFlag::undefinedFlag;
+}
+double Entry::getNumber()
+{
+  if (isNumber())
+    return numberData;
+  if (isBool())
+    return boolData == true ? 1 : 0;
+  return 0;
+}
+bool Entry::getBool()
+{
+  if (isBool())
+    return boolData;
+  if (isNumber())
+    return numberData != 0;
+  if (isString())
+    return stringData.size() != 0;
+  return false;
+}
+string Entry::getString()
+{
+  if (isString())
+    return stringData;
+  if (isNumber())
+    return to_string(numberData);
+  if (isBool())
+    return boolData ? "true" : "false";
+  return "";
+}
 
 unordered_map<string, TokenType> defineKeywords = {
     {"break", TokenType::BREAK},

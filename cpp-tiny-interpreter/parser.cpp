@@ -321,19 +321,20 @@ ASTNode *functionDefinition(list<Token *> &tokens)
   tokens.pop_front();
   if (!IS_TYPE(tokens, TokenType::LP))
     throw "function define error";
-  //函数参数不做签名检查，不保留参数
+  auto node = new ASTNode(ASTNodeType::Function, nameToken->text);
   while (!tokens.empty())
   {
     if (IS_TYPE(tokens, TokenType::RP))
     {
       tokens.pop_front();
-      auto node = new ASTNode(ASTNodeType::Function, nameToken->text);
       auto child = blockStatement(tokens);
       if (child == nullptr)
         throw "function must have body";
       node->addChild(child);
       return node;
     }
+    if (tokens.front()->type == TokenType::NAME)
+      node->params.push_back(tokens.front()->text);
     tokens.pop_front();
   }
   return nullptr;
