@@ -20,9 +20,9 @@ unordered_map<ASTNodeType, string> strTypeMap = {
     {ASTNodeType::NumberLiteral, "NumberLiteral"},
     {ASTNodeType::Identifier, "Identifier"},
     {ASTNodeType::Function, "Function"},
-    {ASTNodeType::For, "For"},
-    {ASTNodeType::DoWhile, "DoWhile"},
-    {ASTNodeType::While, "While"},
+    // {ASTNodeType::For, "For"},
+    // {ASTNodeType::DoWhile, "DoWhile"},
+    // {ASTNodeType::While, "While"},
     {ASTNodeType::Block, "Block"},
     {ASTNodeType::Return, "Return"},
     {ASTNodeType::Binary, "Binary"},
@@ -30,7 +30,7 @@ unordered_map<ASTNodeType, string> strTypeMap = {
     {ASTNodeType::Primary, "Primary"},
     {ASTNodeType::Call, "Call"},
 };
-inline string ToString(ASTNodeType v)
+string ToString(ASTNodeType v)
 {
   if (strTypeMap.find(v) != strTypeMap.end())
     return strTypeMap.at(v);
@@ -40,10 +40,10 @@ Entry *StackFrame::get(string name)
 {
   if (localScope.find(name) != localScope.end())
     return localScope.at(name);
-  else if (stackStackFrame != NULL)
+  else if (stackStackFrame != nullptr)
     return stackStackFrame->get(name);
-  else if (globalScope->find(name) != globalScope->end())
-    return globalScope->at(name);
+  else if (globalScope.find(name) != globalScope.end())
+    return globalScope.at(name);
   throw name + " is not defined";
 }
 void StackFrame::set(string name, Entry *value)
@@ -54,12 +54,12 @@ void StackFrame::set(string name, Entry *value)
     localScope.emplace(name, value);
     return;
   }
-  else if (stackStackFrame != NULL)
+  else if (stackStackFrame != nullptr)
   {
     return stackStackFrame->set(name, value);
   }
-  globalScope->erase(name);
-  globalScope->emplace(name, value);
+  globalScope.erase(name);
+  globalScope.emplace(name, value);
 }
 void StackFrame::declare(string name, Entry *value)
 {
@@ -77,27 +77,30 @@ StackFrame *Context::popFrame()
   frames.pop_back();
   return frames.back();
 }
+Context::Context(int maxFrameSize) : maxFrameSize(maxFrameSize)
+{
+}
 Entry *Context::get(string name)
 {
-  if (frame != NULL)
+  if (frame != nullptr)
     return frame->get(name);
-  if (globalScope->find(name) != globalScope->end())
-    return globalScope->at(name);
+  if (globalScope.find(name) != globalScope.end())
+    return globalScope.at(name);
   throw name + " is not defined";
 }
 void Context::set(string name, Entry *value)
 {
-  if (frame != NULL)
+  if (frame != nullptr)
     return frame->set(name, value);
-  globalScope->erase(name);
-  globalScope->emplace(name, value);
+  globalScope.erase(name);
+  globalScope.emplace(name, value);
 }
 void Context::declare(string name, Entry *value)
 {
-  if (frame != NULL)
+  if (frame != nullptr)
     return frame->declare(name, value);
-  globalScope->erase(name);
-  globalScope->emplace(name, value);
+  globalScope.erase(name);
+  globalScope.emplace(name, value);
 }
 //Entry类
 bool Entry::isNumber()

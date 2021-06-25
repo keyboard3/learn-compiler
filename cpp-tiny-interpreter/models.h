@@ -1,10 +1,10 @@
 #include "string"
 #include "list"
 #include "unordered_map"
+#include "vector"
 using namespace std;
 #ifndef models_h
 #define models_h
-
 enum class TokenType
 {
   DEFULT, //初始化默认值
@@ -80,9 +80,9 @@ enum class ASTNodeType
   NumberLiteral,
   Identifier,
   Function,
-  For,
-  DoWhile,
-  While,
+  // For,
+  // DoWhile,
+  // While,
   Block,
   Return,
   Binary,
@@ -96,7 +96,7 @@ public:
   ASTNodeType type;
   string text;
   vector<string> params;
-  list<ASTNode *> children;
+  vector<ASTNode *> children;
   ASTNode(ASTNodeType type, string text) : type(type), text(text){};
   void addChild(ASTNode *node);
   void dumpAST(string indent);
@@ -109,12 +109,6 @@ enum class PrimaryFlag
   undefinedFlag,
   methodFlag
 };
-struct Method
-{
-  StackFrame *parentFrame;
-  list<ASTNode *> children;
-  long call; //函数指针
-};
 // //解释器推导Primary存的值
 class Entry
 {
@@ -122,7 +116,7 @@ public:
   double numberData;
   string stringData;
   bool boolData;
-  Method *methodData;
+  struct Method *methodData;
   PrimaryFlag flag;
   bool isNumber();
   bool isString();
@@ -145,8 +139,8 @@ class StackFrame
 public:
   StackFrame *stackStackFrame;
   unordered_map<string, Entry *> localScope;
-  unordered_map<string, Entry *> *globalScope;
-  StackFrame(StackFrame *stackStackFrame, unordered_map<string, Entry *> *globalScope) : stackStackFrame(stackStackFrame), globalScope(globalScope){};
+  unordered_map<string, Entry *> &globalScope;
+  StackFrame(StackFrame *stackStackFrame, unordered_map<string, Entry *> &globalScope) : stackStackFrame(stackStackFrame), globalScope(globalScope){};
   Entry *get(string key);
   void declare(string name, Entry *value);
   void set(string name, Entry *value);
@@ -157,17 +151,21 @@ class Context
 public:
   int maxFrameSize;
   list<StackFrame *> frames;
-  StackFrame *frame;
-  unordered_map<string, Entry *> *globalScope;
-  Context(int maxFrameSize) : maxFrameSize(maxFrameSize)
-  {
-    globalScope = {};
-  };
+  StackFrame *frame = nullptr;
+  unordered_map<string, Entry *> globalScope;
+  Context(int maxFrameSize);
   void pushFrame(StackFrame *frame);
   StackFrame *popFrame();
   Entry *get(string name);
   void set(string name, Entry *value);
   void declare(string name, Entry *value);
 };
+struct Method
+{
+  StackFrame *stackLink;
+  vector<string> params;
+  ASTNode *funcBody;
+};
 extern unordered_map<string, TokenType> defineKeywords;
+string ToString(ASTNodeType v);
 #endif

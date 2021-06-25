@@ -29,6 +29,15 @@
     "__hash_table": "cpp",
     "deque": "cpp",
     "__functional_03": "cpp",
-    "bitset": "cpp"
+    "bitset": "cpp",
+    "__tree": "cpp",
+    "algorithm": "cpp",
+    "__functional_base": "cpp",
+    "istream": "cpp",
+    "locale": "cpp",
+    "memory": "cpp",
+    "__bit_reference": "cpp",
+    "cstddef": "cpp",
+    "__cxx_version": "cpp"
   }
 }

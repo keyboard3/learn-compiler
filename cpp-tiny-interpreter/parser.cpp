@@ -1,11 +1,16 @@
 #include "models.h"
 #include "vector"
 #include "iostream"
+#define SKIP_SEMI(tokens)                                         \
+  if (!tokens.empty() && tokens.front()->type == TokenType::SEMI) \
+    tokens.pop_front();
+
 #define ASSET_TS(tokens, tt)      \
   if (tokens.empty())             \
     return nullptr;               \
   if (tokens.front()->type != tt) \
     return nullptr;
+
 #define IS_TYPE(tokens, tt) \
   (!tokens.empty() && tokens.front()->type == tt)
 #define LOG_FRONT(tag, tokens) \
@@ -18,11 +23,16 @@ typedef ASTNode *(*Statement)(list<Token *> &); //动态表达式函数类型定
 ASTNode *parser(list<Token *> &tokens)
 {
   auto rootNode = new ASTNode(ASTNodeType::Program, "pwc");
+  int prevCount = tokens.size();
   while (!tokens.empty())
   {
     auto child = statement(tokens);
     if (child != nullptr)
       rootNode->addChild(child);
+
+    if (prevCount == tokens.size() && !tokens.empty())
+      tokens.pop_front();
+    prevCount = tokens.size();
   }
   return rootNode;
 }
@@ -33,8 +43,7 @@ ASTNode *statement(list<Token *> &tokens)
   for (auto func : funclist)
   {
     auto child = ((Statement)func)(tokens);
-    if (!tokens.empty() && tokens.front()->type == TokenType::SEMI)
-      tokens.pop_front();
+    SKIP_SEMI(tokens);
     if (child != nullptr)
       return child;
   };
@@ -93,6 +102,8 @@ ASTNode *assignmentStatement(list<Token *> &tokens)
  */
 ASTNode *primary(list<Token *> &tokens)
 {
+  SKIP_SEMI(tokens);
+
   LOG_FRONT("primary", tokens);
   ASTNode *node = nullptr;
   if (IS_TYPE(tokens, TokenType::PRIMARY))
@@ -131,7 +142,10 @@ ASTNode *callExpression(list<Token *> &tokens)
   tokens.pop_front();
   auto node = new ASTNode(ASTNodeType::Call, nameToken->text);
   if (IS_TYPE(tokens, TokenType::RP))
+  {
     tokens.pop_front();
+    return node;
+  }
   auto child = primary(tokens);
   if (child != nullptr)
     node->addChild(child);
