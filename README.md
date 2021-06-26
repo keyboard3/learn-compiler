@@ -7,8 +7,7 @@
 - [x] 简单的js解释器`js`：[tiny interpreter](./tiny-interpreter)
 - [x] 简单的js解释器`c++`：[tiny interpreter](./cpp-tiny-interpreter)
 - [x] 基于js实现es5语法的解释器：[acorn interpreter es5](./acorn-interpreter-es5)
-- [ ] 用js将super tiny解释器用字节码解释
-- [ ] 超简单解释器基于字节码解释`js`
-- [ ] 超简单解释器基于字节码解释`c++`
-- [ ] 简单解释器基于字节码解释`js`
-- [ ] 简单解释器基于字节码解释`c++`
+- [x] 超简单解释器基于栈机解释`js`：[super tiny virtual machine](./super-tiny-virtual-machine)
+- [ ] 超简单解释器基于栈机解释`c++`
+- [ ] 简单解释器基于栈机解释`js`
+- [ ] 简单解释器基于栈机解释`c++`

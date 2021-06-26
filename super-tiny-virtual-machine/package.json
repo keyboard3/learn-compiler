@@ -1,0 +1,15 @@
+{
+  "name": "super-tiny-interpreter",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "ts-node test.ts",
+    "cmd": "ts-node cmd.ts"
+  },
+  "dependencies": {
+    "typescript": "^4.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^14.17.4",
+    "ts-node": "^9.1.1"
+  }
+}
