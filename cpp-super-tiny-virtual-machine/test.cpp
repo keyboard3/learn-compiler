@@ -5,7 +5,7 @@ bool VirtualMachine::verbose = false;
 int main()
 {
    VirtualMachine machine = VirtualMachine();
-   int result = machine.process("int a =14*2;int b=(a+2)*(3-1);");
+   int result = machine.process("int a=18;int b=a-(1+4)*2;");
    cout << result << endl;
    return 0;
 }

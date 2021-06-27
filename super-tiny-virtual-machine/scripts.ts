@@ -39,8 +39,8 @@ export default class Script {
         case OpType.MINUS:
         case OpType.MUTI:
         case OpType.DIVID:
-          const lval = this.stack.pop();
           const rval = this.stack.pop();
+          const lval = this.stack.pop();
           let val = 0;
           if (opt == OpType.ADD) val = lval + rval;
           else if (opt == OpType.MINUS) val = lval - rval;

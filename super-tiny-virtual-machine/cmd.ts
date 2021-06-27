@@ -1,5 +1,6 @@
 import { createInterface } from 'readline';
 import * as parser from "./parser";
+import Bytecode from "./bytecode";
 import Script from "./scripts";
 
 const script = new Script();
@@ -19,11 +20,12 @@ readline.on('line', (line) => {
     process.exit(0);
     return;
   }
-  const tree = parser.parse(lineCode);
+  const node = parser.parse(lineCode);
   if (Script.verbose) {
-    tree.dumpAST("");
+    node.dumpAST("");
   }
-  let result = script.evaluate(tree, "");
+  let buf = new Bytecode().parse(node, "");
+  let result = script.evaluate(buf);
   console.log(result)
   // prompt();
 }).on('close', () => {

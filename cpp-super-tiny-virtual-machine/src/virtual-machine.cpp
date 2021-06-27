@@ -79,15 +79,5 @@ int VirtualMachine::process(string code)
         }
         ptr++;
     }
-
-    map<string, Atom *>::iterator it;
-    for (it = kc.globalScope.begin(); it != kc.globalScope.end(); ++it)
-    {
-        cout << it->first << ": ";
-        if (it->second->flags == ATOM_TYPE::ATOM_NUMBER)
-            cout << it->second->ival << endl;
-        else
-            cout << it->second->sval << endl;
-    }
     return result;
 };

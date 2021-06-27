@@ -19,9 +19,9 @@ int bytecodeParse(Context &kc, ASTNode *node, string indent)
     case ASTNodeType::Multiplicative:
     {
         lindex = bytecodeParse(kc, node->children[0], indent);
-        rindex = bytecodeParse(kc, node->children[1], indent);
         if (lindex != -1)
             emit(lindex, node->children[0]);
+        rindex = bytecodeParse(kc, node->children[1], indent);
         if (rindex != -1)
             emit(rindex, node->children[1]);
 

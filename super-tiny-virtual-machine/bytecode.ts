@@ -16,7 +16,7 @@ export default class Bytecode {
     }
     execute(node: ASTNode, indent: string, dataView: DataView): any {
         indent = `${indent}\t`;
-        let that = this;
+        let that = this, value, lvalue, rvalue;
         switch (node.type) {
             case ASTNodeType.Program:
                 for (let child of node.children) {
@@ -25,9 +25,10 @@ export default class Bytecode {
                 break;
             case ASTNodeType.Multiplicative:
             case ASTNodeType.Additive: {
-                node.children.sort((a, b) => b.children.length - a.children.length);
-                this.execute(node.children[0], indent, dataView);
-                this.execute(node.children[1], indent, dataView);
+                lvalue = this.execute(node.children[0], indent, dataView);
+                if (lvalue) emit(dataView, lvalue);
+                rvalue = this.execute(node.children[1], indent, dataView);
+                if (rvalue) emit(dataView, rvalue);
                 if (node.text == "+") emit1(OpType.ADD, dataView);
                 else if (node.text == "-") emit1(OpType.MINUS, dataView);
                 else if (node.text == "*") emit1(OpType.MUTI, dataView);
@@ -35,20 +36,18 @@ export default class Bytecode {
                 break;
             }
             case ASTNodeType.IntLiteral:
-                emit2(OpType.NUMBER, dataView, parseInt(node.text));
-                break;
+                return parseInt(node.text);
             case ASTNodeType.Identifier:
-                emit2(OpType.NAME, dataView, node.text);
-                break;
+                return node.text;
             case ASTNodeType.AssignmentStmt:
-                this.execute(node.children[0], indent, dataView);
-                emit2(OpType.ASSIGN, dataView, node.text);
+            case ASTNodeType.IntDeclaration:
+                value = this.execute(node.children[0], indent, dataView);
+                if (value) emit(dataView, value);
+                emit2(node.type == ASTNodeType.AssignmentStmt ? OpType.ASSIGN : OpType.INT_DECL, dataView, node.text);
                 break;
-            case ASTNodeType.IntDeclaration: {
-                this.execute(node.children[0], indent, dataView);
-                emit2(OpType.INT_DECL, dataView, node.text);
-                break;
-            }
+        }
+        function emit(dataView: DataView, value: any) {
+            emit2(typeof value == "string" ? OpType.NAME : OpType.NUMBER, dataView, value);
         }
         function emit1(op: OpType, dataView: DataView) {
             that.emit1(op, dataView);
