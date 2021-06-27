@@ -41,6 +41,7 @@ export default class Bytecode {
                 emit2(OpType.NAME, dataView, node.text);
                 break;
             case ASTNodeType.AssignmentStmt:
+                this.execute(node.children[0], indent, dataView);
                 emit2(OpType.ASSIGN, dataView, node.text);
                 break;
             case ASTNodeType.IntDeclaration: {
