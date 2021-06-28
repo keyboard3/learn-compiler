@@ -1,6 +1,6 @@
 #include "iostream"
-#include "scripts.h"
-#include "parser.h"
+#include "./src/scripts.h"
+#include "./src/parser.h"
 using namespace std;
 bool Script::verbose = false;
 int main()

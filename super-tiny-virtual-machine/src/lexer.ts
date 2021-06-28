@@ -63,7 +63,7 @@ function initToken(ch: string) {
 }
 
 export function tokenize(code: string): Token[] {
-  console.log("===tokenize===");
+  // console.log("===tokenize===");
   let tokens: Token[] = [];
   let tempToken: Token = null;
   let state: DfaState = DfaState.Initial;
@@ -136,7 +136,7 @@ export function tokenize(code: string): Token[] {
     }
   }
   if (tempToken.text) tokens.push(tempToken); //将最后一个未结束状态的token加入
-  console.log(tokens)
+  // console.log(tokens)
   return tokens;
 }
 

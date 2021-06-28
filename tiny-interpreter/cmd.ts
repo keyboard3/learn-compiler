@@ -1,5 +1,5 @@
 import { createInterface } from 'readline';
-import Script from "./script";
+import Script from "./src/script";
 
 const script = new Script();
 Script.verbose = false;

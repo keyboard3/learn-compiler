@@ -1,7 +1,7 @@
 import { createInterface } from 'readline';
-import * as parser from "./parser";
-import Bytecode from "./bytecode";
-import Script from "./scripts";
+import * as parser from "./src/parser";
+import Bytecode from "./src/bytecode";
+import Script from "./src/scripts";
 
 const script = new Script();
 Script.verbose = false;

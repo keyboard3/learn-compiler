@@ -1,7 +1,7 @@
-import * as lexer from "./lexer";
-import * as parser from "./parser";
-import Bytecode from "./bytecode";
-import Script from "./scripts";
+import * as lexer from "./src/lexer";
+import * as parser from "./src/parser";
+import Bytecode from "./src/bytecode";
+import Script from "./src/scripts";
 
 const code: string = `int a=18;int b=a-(1+4)*2;`;
 

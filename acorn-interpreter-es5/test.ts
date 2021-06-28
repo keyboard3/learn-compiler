@@ -1,4 +1,4 @@
-import Script from "./script";
+import Script from "./src/script";
 
 new Script().process(`
 age=0;

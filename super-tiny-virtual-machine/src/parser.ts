@@ -17,7 +17,7 @@ export function parse(code: string) {
  * @param tokens
  */
 function prog(tokens: Token[]): ASTNode {
-  console.log("===parser===")
+  // console.log("===parser===")
   const node = new ASTNode(ASTNodeType.Program, "pwc");
   while (peek(tokens)) {
     let child = intDeclare(tokens)
@@ -25,7 +25,7 @@ function prog(tokens: Token[]): ASTNode {
       || expressionStatement(tokens);
     if (child) node.addChild(child);
   }
-  console.log(node.dumpAST(""));
+  // console.log(node.dumpAST(""));
   return node;
 }
 

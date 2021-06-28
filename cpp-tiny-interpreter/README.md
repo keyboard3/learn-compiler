@@ -2,11 +2,12 @@
 用c++实现的js解释器的子集
 
 ## 前言
-- 代码测试
+```
+//进入REPL
+make cmd&&./cmd.out
 
 make test
-```
-//test.ts
+//test.cpp
 var c=0;
 function add(a,b){
   return a+b+c;

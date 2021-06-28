@@ -7,7 +7,7 @@ const BUFFER_SIZE = 10000;
 export default class Bytecode {
     offset: number = 0;
     parse(node: ASTNode, indent: string): ArrayBuffer {
-        console.log("===byte generator===")
+        // console.log("===byte generator===")
         this.offset = 0;
         let opBuffer = new ArrayBuffer(BUFFER_SIZE);//二进制指令buffer
         const dataView = new DataView(opBuffer);
@@ -51,11 +51,11 @@ export default class Bytecode {
         }
         function emit1(op: OpType, dataView: DataView) {
             that.emit1(op, dataView);
-            console.log(indent, node.type, node.text, "emit1", to_optype_str(op), that.offset);
+            // console.log(indent, node.type, node.text, "emit1", to_optype_str(op), that.offset);
         }
         function emit2(op: OpType, dataView: DataView, val: string | number) {
             that.emit2(op, dataView, val);
-            console.log(indent, node.type, node.text, "emit2", to_optype_str(op), val, that.offset);
+            // console.log(indent, node.type, node.text, "emit2", to_optype_str(op), val, that.offset);
         }
     }
     emit1(op: OpType, dataView: DataView) {

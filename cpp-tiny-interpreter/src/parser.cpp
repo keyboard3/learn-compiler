@@ -14,7 +14,7 @@
 #define IS_TYPE(tokens, tt) \
   (!tokens.empty() && tokens.front()->type == tt)
 #define LOG_FRONT(tag, tokens) \
-  cout << tag << " " << (tokens.empty() ? "" : tokens.front()->text) << endl;
+  // cout << tag << " " << (tokens.empty() ? "" : tokens.front()->text) << endl;
 
 vector<long> getRootFuncs();
 ASTNode *expressionStatement(list<Token *> &tokens);

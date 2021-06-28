@@ -37,13 +37,13 @@ void Script::process(string code)
   auto node = parser(tokens);
   auto res = evaluate(node, "");
   if (res != nullptr && verbose)
-    cout << "result:" << res->getString();
+    cout << "result:" << res->getString() << endl;
 }
 Entry *Script::evaluate(ASTNode *node, string indent)
 {
   indent += "\t";
   Entry *res = nullptr;
-  cout << indent << "evaluate: " << ToString(node->type) << " " << node->text << endl;
+  // cout << indent << "evaluate: " << ToString(node->type) << " " << node->text << endl;
   switch (node->type)
   {
   case ASTNodeType::Function:
@@ -182,7 +182,7 @@ Entry *unaryExpression(string opt, Entry *val)
   return nullptr;
 }
 
-extern unordered_map<string, function<Entry *(Entry *lval, Entry *rval)>> optMap;
+extern unordered_map<string, function<Entry *(Entry *lval, Entry *rval)> > optMap;
 Entry *binaryExpression(string opt, Entry *lval, Entry *rval)
 {
   if (opt == "+")

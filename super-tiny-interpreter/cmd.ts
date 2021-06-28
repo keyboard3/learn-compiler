@@ -1,6 +1,6 @@
 import { createInterface } from 'readline';
-import * as parser from "./parser";
-import Script from "./scripts";
+import * as parser from "./src/parser";
+import Script from "./src/scripts";
 
 const script = new Script();
 Script.verbose = false;

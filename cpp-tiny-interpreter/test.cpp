@@ -1,4 +1,4 @@
-#include "script.h"
+#include "./src/script.h"
 #include "iostream"
 int main()
 {

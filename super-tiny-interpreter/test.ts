@@ -1,5 +1,5 @@
-import * as lexer from "./lexer";
-import * as parser from "./parser";
+import * as lexer from "./src/lexer";
+import * as parser from "./src/parser";
 
 const code: string = `int a=18;int a=19+2*(8-2);`;
 

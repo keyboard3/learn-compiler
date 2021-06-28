@@ -1,4 +1,4 @@
-import { ASTNode, ASTNode_Type, Context, StackFrame } from "./models";
+import { ASTNode, ASTNodeType, Context, StackFrame } from "./models";
 import * as parser from "./parser";
 
 /**
@@ -29,7 +29,7 @@ export default class Script {
     let result: number = null;
     let kc = this.kc;
     switch (node.type) {
-      case ASTNode_Type.Function: {
+      case ASTNodeType.Function: {
         const funName = node.token.text;
         kc.set(funName, {
           script: node,
@@ -37,32 +37,32 @@ export default class Script {
         });
         break;
       }
-      case ASTNode_Type.Block:
-      case ASTNode_Type.Program:
+      case ASTNodeType.Block:
+      case ASTNodeType.Program:
         for (let child of node.children) {
           result = this.evaluate(child, indent)
-          if (child.type == ASTNode_Type.Return) break;
+          if (child.type == ASTNodeType.Return) break;
         }
         break;
-      case ASTNode_Type.Return:
+      case ASTNodeType.Return:
         if (!node.children.length) break;
         result = this.evaluate(node.children[0], indent);
         break;
-      case ASTNode_Type.Primary:
+      case ASTNodeType.Primary:
         result = primaryExpression(node.token.text);
         break;
-      case ASTNode_Type.Unary: {
+      case ASTNodeType.Unary: {
         let val = this.evaluate(node.children[0], `${indent}\t`);
         result = unaryExpression(node.token.text, val);
         break;
       }
-      case ASTNode_Type.Binary: {
+      case ASTNodeType.Binary: {
         let val1 = this.evaluate(node.children[0], `${indent}\t`);
         let val2 = this.evaluate(node.children[1], `${indent}\t`);
         result = binaryExpression(node.token.text, val1, val2);
         break;
       }
-      case ASTNode_Type.Call: {
+      case ASTNodeType.Call: {
         let funName = node.token.text;
         let fun = kc.get(funName);
         //加入新栈帧
@@ -83,16 +83,16 @@ export default class Script {
         kc.popFrame();
         break;
       }
-      case ASTNode_Type.NumberLiteral:
+      case ASTNodeType.NumberLiteral:
         result = parseInt(node.token.text);
         break;
-      case ASTNode_Type.Identifier: {
+      case ASTNodeType.Identifier: {
         let varName = node.token.text;
         result = kc.get(varName);
         break;
       }
-      case ASTNode_Type.AssignmentStmt:
-      case ASTNode_Type.VarDeclaration: {
+      case ASTNodeType.AssignmentStmt:
+      case ASTNodeType.VarDeclaration: {
         let varName = node.token.text;
         let rval = null;
         if (node.children.length) { //说明是初始化语句，给变量赋值

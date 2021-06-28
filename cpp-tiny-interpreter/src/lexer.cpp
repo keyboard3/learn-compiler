@@ -65,7 +65,7 @@ void skipline(list<char> &cs)
 };
 void matchString(list<char> &cs, list<Token *> &tokens)
 {
-  cout << "matchString cs:" << cs.size() << " tokens:" << tokens.size() << endl;
+  // cout << "matchString cs:" << cs.size() << " tokens:" << tokens.size() << endl;
   ASSET_CHAR(cs);
   char chr = cs.front();
   if (chr != '"' && chr != '\'')
@@ -118,7 +118,7 @@ void matchString(list<char> &cs, list<Token *> &tokens)
 
 void matchNumber(list<char> &cs, list<Token *> &tokens)
 {
-  cout << "matchNumber cs:" << cs.size() << " tokens:" << tokens.size() << endl;
+  // cout << "matchNumber cs:" << cs.size() << " tokens:" << tokens.size() << endl;
   ASSET_CHAR(cs);
   char chr = cs.front();
   Token *tokenBuffer = nullptr;
@@ -177,7 +177,7 @@ void matchNumber(list<char> &cs, list<Token *> &tokens)
 
 void matchNameAndKeyword(list<char> &cs, list<Token *> &tokens)
 {
-  cout << "matchNameAndKeyword cs:" << cs.size() << " tokens:" << tokens.size() << endl;
+  // cout << "matchNameAndKeyword cs:" << cs.size() << " tokens:" << tokens.size() << endl;
   Token *tokenBuffer = nullptr;
   ASSET_CHAR(cs);
   char chr = cs.front();
@@ -200,7 +200,7 @@ void matchNameAndKeyword(list<char> &cs, list<Token *> &tokens)
 };
 void matchOther(list<char> &cs, list<Token *> &tokens)
 {
-  cout << "matchOther cs:" << cs.size() << " tokens:" << tokens.size() << endl;
+  // cout << "matchOther cs:" << cs.size() << " tokens:" << tokens.size() << endl;
   ASSET_CHAR(cs);
   string preChr(1, cs.front());
   char chr;
