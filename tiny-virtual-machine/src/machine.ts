@@ -125,6 +125,9 @@ export default class VitrulMachine {
                         Object.assign(result, val);
                     }
                     break;
+                case OP_TYPE.MUTIL:
+                case OP_TYPE.DIVID:
+                case OP_TYPE.MINUS:
                 case OP_TYPE.ADD:
                     {
                         let rval: _Datum, lval: _Datum;
@@ -132,7 +135,11 @@ export default class VitrulMachine {
                         lval = stack.pop();
                         resolveValue(rval);
                         resolveValue(lval);
-                        const value = rval.nval + lval.nval;
+                        let value = 0;
+                        if (opt == OP_TYPE.ADD) value = lval.nval + rval.nval;
+                        else if (opt == OP_TYPE.MINUS) value = lval.nval - rval.nval;
+                        else if (opt == OP_TYPE.MUTIL) value = lval.nval * rval.nval;
+                        else if (opt == OP_TYPE.DIVID) value = lval.nval / rval.nval;
                         stack.push(new _Datum(DATUM_TYPE.NUMBER, value));
                     }
                     break;
@@ -221,6 +228,9 @@ function to_command_str(type) {
     if (type == OP_TYPE.NUMBER) return "number";
     if (type == OP_TYPE.NAME) return "name";
     if (type == OP_TYPE.ADD) return "add";
+    if (type == OP_TYPE.MINUS) return "minus";
+    if (type == OP_TYPE.MUTIL) return "mutil";
+    if (type == OP_TYPE.DIVID) return "divid";
     if (type == OP_TYPE.ASSIGN) return "assign";
     if (type == OP_TYPE.FUNCTION_DEFINE) return "function defined";
     if (type == OP_TYPE.FUNCTION_NATIVE) return "function native";

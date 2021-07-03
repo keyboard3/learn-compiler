@@ -8,10 +8,9 @@ export function createCode(context: _Context, node: ASTNode) {
 }
 function generateCode(context: _Context, script: _Script, node: ASTNode, offset: number = 0, indent: string) {
     indent += "\t";
-    const isCacheOffset = !!offset;
     const atoms = script.atoms;
     const dataView = new DataView(script.code);
-    console.log(indent, node.type);
+    console.log(indent, node.type, node.token?.text);
     switch (node.type) {
         case ASTNodeType.Block:
         case ASTNodeType.Program:
