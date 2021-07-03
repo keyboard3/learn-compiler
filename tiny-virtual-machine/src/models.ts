@@ -131,11 +131,12 @@ export class ASTNode {
   type: ASTNodeType;
   token: Token;
   children: Array<ASTNode>;
-
+  args: Token[];
   constructor(type: ASTNodeType, token: Token) {
     this.type = type;
     this.token = token;
     this.children = [];
+    this.args = [];
   }
 
   addChild(node: ASTNode) {

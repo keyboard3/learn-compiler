@@ -1,4 +1,4 @@
-import { ASTNode, ASTNodeType, ATOM_TYPE, OP_TYPE, _Atom, _Context, _Script } from "./models";
+import { ASTNode, ASTNodeType, ATOM_TYPE, DATUM_TYPE, OP_TYPE, SYMOBL_TYPE, _Atom, _Context, _Datum, _Function, _Property, _Scope, _Script, _Symbol } from "./models";
 /**
  * 语义解析生成字节码
  */
@@ -17,8 +17,18 @@ function generateCode(context: _Context, script: _Script, node: ASTNode, offset:
             node.children.forEach(child => offset = generateCode(context, script, child, offset, indent));
             break;
         case ASTNodeType.Function:
-            const funName = node.token.text;
-            //缺参数，无法加预先参数符号
+            const nameAtom = atoms[getAtomIndex(ATOM_TYPE.NAME, node.token.text)];
+            const funScript = new _Script();
+            const fun = new _Function(nameAtom, funScript, context.staticLink);
+            fun.scope = new _Scope();
+            generateCode(context, fun.script, node.children[0], 0, "");
+            fun.script.args = node.args.map(arg => new _Symbol(fun.scope, SYMOBL_TYPE.ARGUMENT, { key: funScript.atoms.find(item => item.val == arg.text) }));
+            fun.scope.list = fun.script.args;
+            const funSym = new _Symbol(context.staticLink, SYMOBL_TYPE.PROPERTY, {
+                key: nameAtom,
+                value: new _Property(new _Datum(DATUM_TYPE.FUNCTION, fun))
+            });
+            context.staticLink.list.push(funSym);
             break;
         case ASTNodeType.Binary:
             node.children.forEach(child => offset = generateCode(context, script, child, offset, indent));
@@ -36,6 +46,11 @@ function generateCode(context: _Context, script: _Script, node: ASTNode, offset:
                     appendBuffer(OP_TYPE.DIVID);
                     break;
             }
+            break;
+        case ASTNodeType.Call:
+            appendBuffer(OP_TYPE.NAME, getAtomIndex(ATOM_TYPE.NAME, node.token.text));
+            node.children.forEach(child => offset = generateCode(context, script, child, offset, indent));
+            appendBuffer(OP_TYPE.CALL, node.children.length);
             break;
         case ASTNodeType.Return:
             node.children.forEach(child => offset = generateCode(context, script, child, offset, indent));

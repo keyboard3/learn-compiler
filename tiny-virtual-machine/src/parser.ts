@@ -50,12 +50,11 @@ function functionDefinition(ts: TokenStream): ASTNode | null {
   let node = new ASTNode(ASTNodeType.Function, token);
   token = ts.getToken();
   if (token.type !== TType.LP) throw Error("function define error");
-  //函数定义参数不做签名检查，不用保留参数
   while (token = ts.getToken()) {
     if (token.type === TType.RP) break;
-    if (token.type != TType.COMMA) throw Error("function args define error");
-    token = ts.getToken();
+    if (token.type == TType.COMMA) continue;
     if (token.type !== TType.NAME) throw Error("function args define error");
+    node.args.push(token);
   }
   token = ts.peekToken();
   if (token?.type != TType.LC) throw Error("function missing body")
