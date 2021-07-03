@@ -1,5 +1,6 @@
 # tiny-interpreter
-用js实现的js解释器的子集
+用js实现的js解释器的子集，以字节码解释运行。
+字节码指令解释部分，参考自[mocha1995](https://github.com/doodlewind/mocha1995)
 
 ## 前言
 - REPL
@@ -96,8 +97,10 @@ add : mul ('+' mul)* ;//加法表达式
 mul : pri ('*' pri)* ;//乘法表达式
 pri : NumberLiteral | Identifier | '(' exp ')' ; //基础表达式
 ```
-- 运行时
-  - 解释执行AST节点
+- 运行时（解释执行字节码指令）
+  - 算数表达式
+  - 变量赋值
+  - 函数调用
 
 ## 扩展知识
 - DFA 确定的有限自动机

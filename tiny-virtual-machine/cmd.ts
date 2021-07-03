@@ -1,5 +1,6 @@
 import { createInterface } from 'readline';
-
+import VitrulMachine from "./src/machine"
+const machine = new VitrulMachine();
 
 const readline = createInterface({
   input: process.stdin,
@@ -16,12 +17,12 @@ readline.on('line', (line) => {
     return;
   }
   if (lineCode == "context") {
-    // console.log(script.kc);
+    console.log(machine.context);
     return;
   }
 
-  // script.process(lineCode);
-  // prompt();
+  machine.process(lineCode);
+  prompt();
 }).on('close', () => {
   console.log('再见!');
   process.exit(0);
