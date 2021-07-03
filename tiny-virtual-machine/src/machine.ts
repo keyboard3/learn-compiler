@@ -49,8 +49,10 @@ export default class VitrulMachine {
                         frame.down = context.stack.frame;
                         //将已压入栈的参数，参数符号的栈实参位置设置
                         if (frame.fun.script) {
-                            for (let i = 0; i < argc; i++)
+                            for (let i = 0; i < argc; i++) {
+                                resolveValue(frame.argv[i]);
                                 frame.fun.script.args[i].slot = i;
+                            }
                         }
                         //压入栈
                         stack.frame = frame;

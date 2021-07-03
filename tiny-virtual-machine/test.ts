@@ -1,8 +1,9 @@
 import VitrulMachine from "./src/machine"
 const machine = new VitrulMachine();
 machine.process(`
+var a = 1*2;
 function add(a,b) {
     return a+b*2;
 }
-var c=add(10,10);
+var c=add(a,10);
 `)

@@ -18,12 +18,11 @@ a=add(1,2);
 npm run test
 ```
 //test.ts
-var c=0;
-function add(a,b){
-  return a+b+c;
+var a = 1*2;
+function add(a,b) {
+    return a+b*2;
 }
-a=add(1,2);
-a=add(a,a)
+var c=add(a,10);
 ```
 
 ## 支持

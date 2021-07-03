@@ -9,5 +9,5 @@
 - [x] 基于js实现es5语法的解释器：[acorn interpreter es5](./acorn-interpreter-es5)
 - [x] 超简单解释器基于栈机解释`js`：[super tiny virtual machine](./super-tiny-virtual-machine)
 - [x] 超简单解释器基于栈机解释`c++`：[super tiny virtual machine](./cpp-super-tiny-virtual-machine)
-- [ ] 简单解释器基于栈机解释`js`：[tiny virtual machine](./tiny-virtual-machine)
+- [x] 简单解释器基于栈机解释`js`：[tiny virtual machine](./tiny-virtual-machine)
 - [ ] 简单解释器基于栈机解释`c++`
