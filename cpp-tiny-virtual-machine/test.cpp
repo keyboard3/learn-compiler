@@ -3,5 +3,5 @@
 int main()
 {
   Machine *machine = new Machine();
-  machine->process("function hello(a,b){return a+10+a;}  var c=hello(2);");
+  machine->process("function hello(a,b){return a+10*a;}  var c=hello(2,3,4);");
 }

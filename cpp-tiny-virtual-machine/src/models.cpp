@@ -141,12 +141,12 @@ bool resolveValue(Context *context, Datum *dp)
       {
         dp->type = DATUM_TYPE::NUMBER;
         dp->u.nval = atom->nval;
-        cout << "primary value:" << dp->u.nval << endl;
+        // cout << "primary value:" << dp->u.nval << endl;
         return true;
       }
     }
-    else if (dp->type == DATUM_TYPE::NUMBER)
-      cout << "primary value:" << dp->u.nval << endl;
+    // else if (dp->type == DATUM_TYPE::NUMBER)
+    //   cout << "primary value:" << dp->u.nval << endl;
     return false;
   };
   if (dp->type == DATUM_TYPE::SYMBOL)

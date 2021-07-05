@@ -151,6 +151,8 @@ ASTNode *callExpression(list<Token *> &tokens)
     node->addChild(child);
   while (!tokens.empty() && tokens.front()->type != TokenType::RP)
   {
+    if (tokens.front()->type == TokenType::COMMA)
+      tokens.pop_front();
     auto child = primary(tokens);
     if (child != nullptr)
       node->addChild(child);

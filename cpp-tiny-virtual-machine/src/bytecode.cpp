@@ -5,6 +5,7 @@ void emit2(Script *script, OP_TYPE type, uint8_t op1);
 void generateCode(Script *script, ASTNode *node, Scope *slink, string indent);
 void createCode(Context *context, ASTNode *node)
 {
+    cout << "createCode" << endl;
     generateCode(context->script, node, context->staticLink, "");
 };
 void generateCode(Script *script, ASTNode *node, Scope *slink, string indent)
@@ -34,7 +35,7 @@ void generateCode(Script *script, ASTNode *node, Scope *slink, string indent)
         funSym->entry.key = nameAtom;
         funSym->entry.value = funProp;
         pushSymbol(funSym, slink);
-        //函数形参符号
+        //函数形参符号,倒叙的参数链
         for (int i = node->params.size() - 1; i >= 0; i--)
         {
             string param = node->params[i];
