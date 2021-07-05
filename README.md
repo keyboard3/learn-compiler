@@ -10,4 +10,4 @@
 - [x] 超简单解释器基于栈机解释`js`：[super tiny virtual machine](./super-tiny-virtual-machine)
 - [x] 超简单解释器基于栈机解释`c++`：[super tiny virtual machine](./cpp-super-tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`js`：[tiny virtual machine](./tiny-virtual-machine)
-- [ ] 简单解释器基于栈机解释`c++`
+- [x] 简单解释器基于栈机解释`c++`：[tiny virtual machine](./cpp-tiny-virtual-machine)
