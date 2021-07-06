@@ -11,10 +11,10 @@
 - [x] 超简单解释器基于栈机解释`c++`：[super tiny virtual machine](./cpp-super-tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`js`：[tiny virtual machine](./tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`c++`：[tiny virtual machine](./cpp-tiny-virtual-machine)
-- [ ] 简单解释器基于栈机支持对象`js`
-- [ ] 简单解释器基于栈机支持对象`c++`
-- [ ] 简单解释器基于栈机支持闭包`js`
-- [ ] 简单解释器基于栈机支持闭包`c++`
+- [ ] 简单栈机解释器支持对象`js`
+- [ ] 简单栈机解释器支持对象`c++`
+- [ ] 简单栈机解释器支持闭包`js`
+- [ ] 简单栈机解释器支持闭包`c++`
 - [ ] 基于babel的栈机支持闭包和对象
 - [ ] 超简单栈机的引用计数内存回收实现
 - [ ] 简单栈机的异常堆栈
