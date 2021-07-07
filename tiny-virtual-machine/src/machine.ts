@@ -234,8 +234,6 @@ function to_command_str(type) {
     if (type == OP_TYPE.MUTIL) return "mutil";
     if (type == OP_TYPE.DIVID) return "divid";
     if (type == OP_TYPE.ASSIGN) return "assign";
-    if (type == OP_TYPE.FUNCTION_DEFINE) return "function defined";
-    if (type == OP_TYPE.FUNCTION_NATIVE) return "function native";
     if (type == OP_TYPE.CALL) return "call";
     if (type == OP_TYPE.RETURN) return "return";
 }

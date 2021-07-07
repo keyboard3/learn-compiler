@@ -395,7 +395,5 @@ export enum OP_TYPE {
   DIVID,
   ASSIGN,
   RETURN,
-  FUNCTION_DEFINE,
-  FUNCTION_NATIVE,
   CALL,
 }
