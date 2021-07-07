@@ -11,11 +11,25 @@
 - [x] 超简单解释器基于栈机解释`c++`：[super tiny virtual machine](./cpp-super-tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`js`：[tiny virtual machine](./tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`c++`：[tiny virtual machine](./cpp-tiny-virtual-machine)
-- [ ] 简单栈机解释器支持对象`js`
-- [ ] 简单栈机解释器支持对象`c++`
-- [ ] 简单栈机解释器支持闭包`js`
-- [ ] 简单栈机解释器支持闭包`c++`
-- [ ] 基于babel的栈机支持闭包和对象
-- [ ] 超简单栈机的引用计数内存回收实现
-- [ ] 简单栈机的异常堆栈
-- [ ] 简单TypeScript栈机
+- [ ] 原型栈机解释器`js`
+    - [ ] 对象数据类型
+    - [ ] 一等公民函数
+    - [ ] 引用计数垃圾回收
+    - [ ] 嵌套函数声明
+    - [ ] 函数表达式
+    - [ ] 函数的call和apply方法
+    - [ ] 基于原型的继承
+    - [ ] 对undefined的全局绑定
+    - [ ] try-catch-finally语句
+- [ ] 原型栈机解释器`c++`
+    - [ ] 对象数据类型
+    - [ ] 一等公民函数
+    - [ ] 引用计数垃圾回收
+    - [ ] 嵌套函数声明
+    - [ ] 函数表达式
+    - [ ] 函数的call和apply方法
+    - [ ] 基于原型的继承
+    - [ ] 对undefined的全局绑定
+    - [ ] try-catch-finally语句
+- [ ] 基于Babel的原型栈机
+- [ ] 面向TypeScript的简单栈机

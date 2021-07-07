@@ -1,7 +1,20 @@
-# tiny-interpreter
-用js实现的js解释器的子集，以字节码解释运行。
+# proto-virtual-machine
+JS解释器原型，逐渐完善<br>
 字节码指令解释部分，参考自[mocha1995](https://github.com/doodlewind/mocha1995)
 
+## 支持
+  - [x] 赋值语句
+  - [x] 函数调用
+  - [x] 算数表达式
+  - [ ] 对象数据类型
+  - [ ] 一等公民函数
+  - [ ] 引用计数垃圾回收
+  - [ ] 嵌套函数声明
+  - [ ] 函数表达式
+  - [ ] 函数的call和apply方法
+  - [ ] 基于原型的继承
+  - [ ] 对undefined的全局绑定
+  - [ ] try-catch-finally语句
 ## 前言
 - REPL
 ```
