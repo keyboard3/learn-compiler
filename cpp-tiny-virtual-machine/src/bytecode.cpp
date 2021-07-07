@@ -24,7 +24,9 @@ void generateCode(Script *script, ASTNode *node, Scope *slink, string indent)
         //函数对象
         Script *funScript = new Script(1000);
         Function *fun = new Function(nameAtom, funScript, slink);
-        generateCode(funScript, node->children[0], fun->slink, indent);
+        //在编译时就创建函数的作用域，并确认静态作用域
+        fun->scope = new Scope(slink);
+        generateCode(funScript, node->children[0], fun->scope, indent);
         //存储函数对象的数据
         Datum *fund = new Datum();
         fund->type = DATUM_TYPE::FUNCTION;
@@ -39,12 +41,13 @@ void generateCode(Script *script, ASTNode *node, Scope *slink, string indent)
         for (int i = node->params.size() - 1; i >= 0; i--)
         {
             string param = node->params[i];
-            Symbol *sym = new Symbol(SYMBOL_TYPE::ARGUMENT, fun->slink);
+            Symbol *sym = new Symbol(SYMBOL_TYPE::ARGUMENT, fun->scope);
             sym->entry.key = funScript->atoms[getAtomIndex(funScript, param)];
             Symbol *next = funScript->args;
             sym->next = next;
             funScript->args = sym;
         }
+        fun->scope->list = funScript->args;
     }
     break;
     case ASTNodeType::Call:

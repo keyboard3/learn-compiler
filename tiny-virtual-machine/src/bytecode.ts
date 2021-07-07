@@ -20,8 +20,15 @@ function generateCode(context: _Context, script: _Script, node: ASTNode, offset:
             const nameAtom = atoms[getAtomIndex(ATOM_TYPE.NAME, node.token.text)];
             const funScript = new _Script();
             const fun = new _Function(nameAtom, funScript, context.staticLink);
-            fun.scope = new _Scope();
+            //在编译时就创建好作用域，并建立好静态作用域的关系
+            fun.scope = new _Scope(context.staticLink);
+            //解析函数体的时将当前上下文替换成刚创建的函数上下文
+            const oldSlink = context.staticLink;
+            context.staticLink = fun.scope;
             generateCode(context, fun.script, node.children[0], 0, "");
+            //函数体解析完毕，还原上下文
+            context.staticLink = oldSlink;
+
             fun.script.args = node.args.map(arg => new _Symbol(fun.scope, SYMOBL_TYPE.ARGUMENT, { key: funScript.atoms.find(item => item.val == arg.text) }));
             fun.scope.list = fun.script.args;
             const funSym = new _Symbol(context.staticLink, SYMOBL_TYPE.PROPERTY, {

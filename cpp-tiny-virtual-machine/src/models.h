@@ -207,8 +207,8 @@ public:
   {
     list = nullptr;
   }
-  Symbol *list;     //符号链
-  Property *props;  //属性链
+  Symbol *list;    //符号链
+  Property *props; //属性链
   Scope *parent;
 };
 //指令集合
@@ -230,10 +230,10 @@ public:
 class Function
 {
 public:
-  Function(Atom *name, Script *script, Scope *slink) : name(name), script(script), slink(slink) {}
+  Function(Atom *name, Script *script, Scope *slink) : name(name), script(script), scope(slink) {}
   Atom *name;     //函数名
   Script *script; //指令集合
-  Scope *slink;   //函数定义所在的静态作用域
+  Scope *scope;   //函数定义所在的静态作用域
 };
 //函数执行在栈中的具体体现
 struct Frame
@@ -244,7 +244,6 @@ struct Frame
   Datum *vars;    //变量起始地址
   Function *fun;  //当前栈帧所指向的函数
   Frame *down;    //上一个栈帧
-  Scope *scope;   //当前运行栈帧所处的作用域
 };
 struct Stack
 {
@@ -261,11 +260,12 @@ public:
     staticLink = nullptr;
     stack.ptr = stack.base = (Datum *)malloc(sizeof(Datum) * stackSize);
     stack.frame = nullptr;
-    staticLink = new Scope(nullptr);
+    globalObject = staticLink = new Scope(nullptr);
   }
-  Script *script;    //根代码
-  Stack stack;       //数据栈
-  Scope *staticLink; //顶层的作用域
+  Script *script;      //根代码
+  Stack stack;         //数据栈
+  Scope *staticLink;   //顶层的作用域
+  Scope *globalObject; //全局对象，在这里暂时无用
 };
 Symbol *findSymbol(Scope *scope, Atom *atom);
 void pushAtom(Atom *atom, Stack *stack);

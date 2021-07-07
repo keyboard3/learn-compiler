@@ -125,20 +125,18 @@ void codeInterpret(Context *context, Script *script, Scope *slink, Datum *result
             frame->argv = stack->ptr - argc;
             frame->nvars = 0;
             frame->vars = stack->ptr;
-            frame->scope = new Scope(frame->fun->slink);
-            frame->scope->list = frame->fun->script->args;
             //给参数符号初始化栈帧的位置
             int slot = 0;
-            for (Symbol *sym = frame->scope->list; sym != nullptr && slot < argc; sym = sym->next, slot++)
+            for (Symbol *sym = frame->fun->scope->list; sym != nullptr && slot < argc; sym = sym->next, slot++)
             {
                 resolveValue(context, &frame->argv[slot]); //参数需要解析成数据才能用
-                sym->scope = frame->scope;
+                sym->scope = frame->fun->scope;
                 sym->slot = slot;
             }
             //调用
             Datum *result = new Datum();
             result->type = DATUM_TYPE::UNDEF;
-            codeInterpret(context, frame->fun->script, frame->scope, result);
+            codeInterpret(context, frame->fun->script, frame->fun->scope, result);
             //调用完毕还原栈帧
             stack->frame = frame->down;
             stack->ptr = frame->argv;

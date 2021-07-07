@@ -168,7 +168,7 @@ bool resolveValue(Context *context, Datum *dp)
     Frame *targetFp = nullptr;
     for (Frame *fp = context->stack.frame; fp != nullptr; fp = fp->down)
     {
-      if (fp->scope == sym->scope)
+      if (fp->fun->scope == sym->scope)
       {
         targetFp = fp;
         break;

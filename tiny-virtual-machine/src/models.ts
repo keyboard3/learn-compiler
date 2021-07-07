@@ -238,8 +238,7 @@ export class TokenStream {
 export class _Context {
   constructor() {
     this.stack = new _Stack();
-    this.globalObject = new _Scope();
-    this.staticLink = this.globalObject;
+    this.staticLink = this.globalObject = new _Scope();
   }
   staticLink: _Scope;//静态作用域
   globalObject: _Scope;//顶级作用域
