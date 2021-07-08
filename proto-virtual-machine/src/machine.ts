@@ -198,17 +198,17 @@ export default class VitrulMachine {
         function resolveSymbol(datum: _Datum): boolean {
             if (datum.flag == DATUM_TYPE.SYMBOL) return true;
             if (datum.flag == DATUM_TYPE.ATOM) {
-                const symbol = findSymbolByAtom(context.staticLink, datum.atom);
+                const symbol = searchScopes(context.staticLink, datum.atom);
                 if (!symbol) return false;
                 datum.symbol = symbol;
                 datum.flag = DATUM_TYPE.SYMBOL;
                 return true;
             }
             return false;
-            function findSymbolByAtom(scope: _Scope, atom: _Atom) {
+            function searchScopes(scope: _Scope, atom: _Atom) {
                 let symbol = scope.list.find(symbol => symbol.entry?.key == atom);
                 if (!symbol && scope.parent) {
-                    symbol = findSymbolByAtom(scope.parent, atom);
+                    symbol = searchScopes(scope.parent, atom);
                 }
                 return symbol;
             }

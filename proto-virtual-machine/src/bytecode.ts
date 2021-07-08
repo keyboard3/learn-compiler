@@ -20,8 +20,13 @@ function generateCode(context: _Context, script: _Script, node: ASTNode, offset:
             const nameAtom = atoms[getAtomIndex(ATOM_TYPE.NAME, node.token.text)];
             const funScript = new _Script();
             const fun = new _Function(nameAtom, funScript, context.staticLink);
-            fun.scope = new _Scope();
+
+            fun.scope = new _Scope(context.staticLink);
+            const oldSlink = context.staticLink;
+            context.staticLink = fun.scope;
             generateCode(context, fun.script, node.children[0], 0, "");
+            context.staticLink = oldSlink;
+
             fun.script.args = node.args.map(arg => new _Symbol(fun.scope, SYMOBL_TYPE.ARGUMENT, { key: funScript.atoms.find(item => item.val == arg.text) }));
             fun.scope.list = fun.script.args;
             const funSym = new _Symbol(context.staticLink, SYMOBL_TYPE.PROPERTY, {
