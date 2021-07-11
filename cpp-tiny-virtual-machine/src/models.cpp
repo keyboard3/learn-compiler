@@ -104,7 +104,8 @@ Datum *popDatum(Stack *stack)
 }
 void pushDatum(Stack *stack, Datum *d)
 {
-  stack->ptr = d;
+  memcpy(stack->ptr, d, sizeof(Datum));
+  // cout << "push datum stack " << stack->ptr << endl;
   stack->ptr++;
 }
 void pushSymbol(Symbol *sym, Scope *scope)
@@ -112,6 +113,7 @@ void pushSymbol(Symbol *sym, Scope *scope)
   auto next = scope->list;
   sym->next = next;
   scope->list = sym;
+  // cout << "push symbol " << sym << endl;
 }
 void pushAtom(Atom *atom, Stack *stack)
 {
@@ -119,14 +121,15 @@ void pushAtom(Atom *atom, Stack *stack)
   d.type = DATUM_TYPE::ATOM;
   d.u.atom = atom;
   stack->ptr[0] = d;
+  // cout << "push atom stack " << stack->ptr << endl;
   stack->ptr++;
 }
 void pushNumber(number value, Stack *stack)
 {
-  Datum val;
-  val.u.nval = value;
-  val.type = DATUM_TYPE::NUMBER;
-  stack->ptr[0] = val;
+  Datum d;
+  d.u.nval = value;
+  d.type = DATUM_TYPE::NUMBER;
+  stack->ptr[0] = d;
   stack->ptr++;
 }
 bool resolveValue(Context *context, Datum *dp)
@@ -151,7 +154,7 @@ bool resolveValue(Context *context, Datum *dp)
   };
   if (dp->type == DATUM_TYPE::SYMBOL)
   {
-    auto sym = dp->u.sym;
+    Symbol *sym = dp->u.sym;
     if (sym->type == SYMBOL_TYPE::PROPERTY)
     {
       Property *prop = (Property *)sym->entry.value;
@@ -195,11 +198,11 @@ bool resolveSymbol(Context *context, Datum *dp)
 {
   if (dp->type == DATUM_TYPE::ATOM)
   {
-    auto atom = dp->u.atom;
+    Atom *atom = dp->u.atom;
     if (atom->type == ATOM_TYPE::NAME)
     {
-      auto sym = findSymbol(context->staticLink, atom);
-      if (!sym)
+      Symbol *sym = findSymbol(context->staticLink, atom);
+      if (sym == nullptr)
         return false;
       //只有name atom需要去作用域中找到是否存在已解析的符号
       dp->type = DATUM_TYPE::SYMBOL;
@@ -268,13 +271,16 @@ unsigned getAtomIndex(Script *script, string val)
   script->atoms.push_back(at);
   return script->atoms.size() - 1;
 }
-void dumpScope(Scope *scope)
+void dumpScope(Scope *scope, string indent)
 {
-  for (Symbol *sym = scope->list; sym; sym = sym->next)
+  cout << indent << "dump scope begin" << endl;
+  for (Symbol *sym = scope->list; sym != nullptr; sym = sym->next)
   {
+    // cout << indent + "\t" << sym << endl;
     Datum *temp = (Datum *)sym->entry.value;
-    cout << sym->entry.key->sval << " " << temp->u.nval << endl;
+    cout << indent << sym->entry.key->sval << " " << temp->u.nval << endl;
   }
+  cout << indent << "dump scope end" << endl;
 }
 string to_op_str(OP_TYPE op)
 {

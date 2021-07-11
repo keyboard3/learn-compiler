@@ -30,7 +30,7 @@ function generateCode(context: _Context, script: _Script, node: ASTNode, offset:
             context.staticLink = oldSlink;
 
             fun.script.args = node.args.map(arg => new _Symbol(fun.scope, SYMOBL_TYPE.ARGUMENT, { key: funScript.atoms.find(item => item.val == arg.text) }));
-            fun.scope.list = fun.script.args;
+            fun.scope.list.push(...fun.script.args);
             const funSym = new _Symbol(context.staticLink, SYMOBL_TYPE.PROPERTY, {
                 key: nameAtom,
                 value: new _Property(new _Datum(DATUM_TYPE.FUNCTION, fun))

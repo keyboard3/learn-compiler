@@ -18,11 +18,14 @@ a=add(1,2);
 npm run test
 ```
 //test.ts
-var a = 1*2;
-function add(a,b) {
-    return a+b*2;
+function getAdd() {
+    function add(a,b) {
+        return a+b;
+    }
+    return add;
 }
-var c=add(a,10);
+var add = getAdd();
+var c = add(1,2);
 ```
 
 ## 支持
@@ -100,6 +103,8 @@ pri : NumberLiteral | Identifier | '(' exp ')' ; //基础表达式
   - 算数表达式
   - 变量赋值
   - 函数调用
+  - 函数一等公民
+  - 嵌套函数
 
 ## 扩展知识
 - DFA 确定的有限自动机

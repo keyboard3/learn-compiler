@@ -3,5 +3,14 @@
 int main()
 {
   Machine *machine = new Machine();
-  machine->process("function hello(a,b){return a+10*a;}  var c=hello(2,3,4);");
+  machine->process("\
+  function getAdd() {\
+   function add(a,b) {\
+     return a+b;\
+   }\
+   return add;\
+  }\
+  var outAdd = getAdd();\
+  var c=outAdd(1,2);\
+");
 }

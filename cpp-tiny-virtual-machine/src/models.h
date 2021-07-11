@@ -278,7 +278,7 @@ bool resolveSymbol(Context *context, Datum *dp);
 bool resolveValue(Context *context, Datum *dp);
 Atom *getAtom(Script *script, int index);
 string to_op_str(OP_TYPE op);
-void dumpScope(Scope *scope);
+void dumpScope(Scope *scope, string indent);
 void pushDatum(Stack *stack, Datum *d);
 void pushSymbol(Symbol *sym, Scope *scope);
 #endif

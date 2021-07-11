@@ -3,7 +3,7 @@
 #include "parser.h"
 #include "bytecode.h"
 #include "iostream"
-void codeInterpret(Context *context, Script *script, Scope *slink, Datum *result);
+void codeInterpret(Context *context, Script *script, Scope *slink, Datum *result, string indent);
 Machine::Machine()
 {
     context = new Context(1000);
@@ -14,20 +14,22 @@ void Machine::process(string code)
     auto node = parser(tokens);
     createCode(context, node);
     Datum *result = new Datum();
-    codeInterpret(context, context->script, context->staticLink, result);
-    dumpScope(context->staticLink);
+    codeInterpret(context, context->script, context->staticLink, result, "");
+    dumpScope(context->staticLink, "");
 }
-void codeInterpret(Context *context, Script *script, Scope *slink, Datum *result)
+void codeInterpret(Context *context, Script *script, Scope *slink, Datum *result, string indent)
 {
+    indent += "\t";
     uint8_t *ptr = script->code;
     uint8_t *end = ptr + script->length;
     Stack *stack = &context->stack;
-    auto oldslink = context->staticLink;
+    Scope *oldslink = context->staticLink;
     context->staticLink = slink;
+    // dumpScope(oldslink, indent);
     while (ptr < end)
     {
         OP_TYPE op = (OP_TYPE)ptr[0];
-        cout << "op:" << to_op_str(op) << endl;
+        cout << indent << "op:" << to_op_str(op) << endl;
         ptr++;
 
         switch (op)
@@ -45,7 +47,6 @@ void codeInterpret(Context *context, Script *script, Scope *slink, Datum *result
             resolveValue(context, rval);
             if (lval->type == DATUM_TYPE::ATOM)
             {
-                //构建解析符号，数据挂到自己上
                 Symbol *sym = new Symbol(SYMBOL_TYPE::VARIABLE, context->staticLink);
                 sym->entry.key = lval->u.atom;
                 if (stack->frame != nullptr)
@@ -104,7 +105,6 @@ void codeInterpret(Context *context, Script *script, Scope *slink, Datum *result
                 break;
             Datum *rval = popDatum(stack);
             bool isOk = resolveValue(context, rval);
-            cout << "return ravl:" << rval->u.nval << endl;
             memcpy(result, rval, sizeof(Datum));
         }
         break;
@@ -136,7 +136,7 @@ void codeInterpret(Context *context, Script *script, Scope *slink, Datum *result
             //调用
             Datum *result = new Datum();
             result->type = DATUM_TYPE::UNDEF;
-            codeInterpret(context, frame->fun->script, frame->fun->scope, result);
+            codeInterpret(context, frame->fun->script, frame->fun->scope, result, indent);
             //调用完毕还原栈帧
             stack->frame = frame->down;
             stack->ptr = frame->argv;
@@ -146,5 +146,6 @@ void codeInterpret(Context *context, Script *script, Scope *slink, Datum *result
         break;
         }
     }
+    // dumpScope(oldslink, indent);
     context->staticLink = oldslink;
 }

@@ -1,41 +1,48 @@
 # tiny-interpreter
-用c++实现的js解释器的子集。以字节码解释运行。
+
+用 c++实现的 js 解释器的子集。以字节码解释运行。
 字节码指令解释部分，参考自[mocha1995](https://github.com/doodlewind/mocha1995)
 
 ## 前言
+
 ```
 //进入REPL
 make cmd&&./cmd.out
 
 make test
 //test.cpp
-var c=0;
-function add(a,b){
-  return a+b+c;
-}
-a=add(1,2);
-a=add(a,a)
+machine->process("\
+function getAdd() {\
+  function add(a,b) {\
+    return a+b;\
+  }\
+  return add;\
+}\
+var outAdd = getAdd();\
+var c=outAdd(1,2);\
+");
 ```
 
 ## 支持
 
 - 词法分析
   - 参考[mocha1995](https://github.com/doodlewind/mocha1995)的词法解析
-  - 算法逻辑采用了NFA有限自动机
+  - 算法逻辑采用了 NFA 有限自动机
+
 ```
 LB: [
 RB: ] //数组标识
-LC: { 
+LC: {
 RC: }
-LP: ( 
+LP: (
 RP: ) //函数声明和调用标识
 COMMA: ',' //数组或者多个声明标识 ,
 ASSIGN: =,+=,-= //赋值符号 =,+=,-=
 HOOK: ? //条件判断符号 ?
 COLON: : //三目符号中的:
-OR: || 
+OR: ||
 AND: &&
-BITOR: | 
+BITOR: |
 BITXOR: ^
 BITAND: &
 EQOP: ==,!= //等于符号
@@ -70,8 +77,10 @@ RETURN: return //return关键字 函数返回用
 NEW: new //new关键字 创建对象
 RESERVED: reserved  //保留关键字
 ```
+
 - 语法分析
-  - 依据[EBNF(扩展巴克斯范式)](https://zh.wikipedia.org/wiki/%E6%89%A9%E5%B1%95%E5%B7%B4%E7%A7%91%E6%96%AF%E8%8C%83%E5%BC%8F)的语法规则来实现生成AST
+  - 依据[EBNF(扩展巴克斯范式)](https://zh.wikipedia.org/wiki/%E6%89%A9%E5%B1%95%E5%B7%B4%E7%A7%91%E6%96%AF%E8%8C%83%E5%BC%8F)的语法规则来实现生成 AST
+
 ```
 stmt : varDecl | assignmentStat | expStmt | returnStmt | functionDecl | callExp ; //语句
 functionDecl : Function Identifier '(' Identifier (',' Identifier)* ')' ; //函数定义
@@ -88,12 +97,16 @@ add : mul ('+' mul)* ;//加法表达式
 mul : pri ('*' pri)* ;//乘法表达式
 pri : NumberLiteral | Identifier | '(' exp ')' ; //基础表达式
 ```
+
 - 运行时（解释执行字节码指令）
   - 算数表达式
   - 变量赋值
   - 函数调用
+  - 函数一等公民
+  - 嵌套函数
 
 ## 扩展知识
+
 - DFA 确定的有限自动机
 
 状态机在任何一个状态，基于输入的字符，都能做一个确定的状态转换。不会产生回溯

@@ -23,9 +23,9 @@ void generateCode(Script *script, ASTNode *node, Scope *slink, string indent)
         Atom *nameAtom = script->atoms[getAtomIndex(script, node->text)];
         //函数对象
         Script *funScript = new Script(1000);
-        Function *fun = new Function(nameAtom, funScript, slink);
         //在编译时就创建函数的作用域，并确认静态作用域
-        fun->scope = new Scope(slink);
+        Scope *funScope = new Scope(slink);
+        Function *fun = new Function(nameAtom, funScript, funScope);
         generateCode(funScript, node->children[0], fun->scope, indent);
         //存储函数对象的数据
         Datum *fund = new Datum();
@@ -47,7 +47,10 @@ void generateCode(Script *script, ASTNode *node, Scope *slink, string indent)
             sym->next = next;
             funScript->args = sym;
         }
-        fun->scope->list = funScript->args;
+        if (fun->scope->list != nullptr)
+            fun->scope->list->next = funScript->args;
+        else
+            fun->scope->list = funScript->args;
     }
     break;
     case ASTNodeType::Call:
@@ -94,12 +97,14 @@ void generateCode(Script *script, ASTNode *node, Scope *slink, string indent)
 }
 void emit1(Script *script, OP_TYPE type)
 {
+    cout << "emit1 " << to_op_str(type) << endl;
     unsigned base = script->length;
     script->code[base + 0] = (uint8_t)type;
     script->length++;
 }
 void emit2(Script *script, OP_TYPE type, uint8_t op1)
 {
+    cout << "emit2 " << to_op_str(type) << endl;
     unsigned base = script->length;
     script->code[base + 0] = (uint8_t)type;
     script->code[base + 1] = op1;

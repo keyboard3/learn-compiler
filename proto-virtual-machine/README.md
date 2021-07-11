@@ -6,11 +6,12 @@ JS解释器原型，逐渐完善<br>
   - [x] 赋值语句
   - [x] 函数调用
   - [x] 算数表达式
+  - [x] 一等公民函数
+  - [x] 嵌套函数声明
   - [ ] 对象数据类型
-  - [ ] 一等公民函数
   - [ ] 引用计数垃圾回收
-  - [ ] 嵌套函数声明
   - [ ] 函数表达式
+  - [ ] 闭包
   - [ ] 函数的call和apply方法
   - [ ] 基于原型的继承
   - [ ] 对undefined的全局绑定
@@ -31,11 +32,14 @@ a=add(1,2);
 npm run test
 ```
 //test.ts
-var a = 1*2;
-function add(a,b) {
-    return a+b*2;
+function getAdd() {
+    function add(a,b) {
+        return a+b;
+    }
+    return add;
 }
-var c=add(a,10);
+var add = getAdd();
+var c = add(1,2);
 ```
 
 ## 支持
@@ -109,10 +113,7 @@ add : mul ('+' mul)* ;//加法表达式
 mul : pri ('*' pri)* ;//乘法表达式
 pri : NumberLiteral | Identifier | '(' exp ')' ; //基础表达式
 ```
-- 运行时（解释执行字节码指令）
-  - 算数表达式
-  - 变量赋值
-  - 函数调用
+- 运行时（解释执行字节码指令）åå
 
 ## 扩展知识
 - DFA 确定的有限自动机

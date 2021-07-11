@@ -1,7 +1,7 @@
 # learn-compiler
 通过JS语言为入口，学习实践编译原理。<br/>
 面对JS复杂的语言实现，选择穿越历史迷雾，站在Brendan Eich的视角上，利用现代的思想和知识站来演变这门语言。<br>
-学习任何成体系的东西，只有身临其境感受历史发展，才能真正理解。
+理解和实践之间有巨大的鸿沟，如果不去实践理解，那么永远都是纸上谈兵，没有任何战斗力。
 ## 计划
 - [x] 超简单的解释器`js`：[super tiny interpreter](./super-tiny-interpreter)
 - [x] 超简单的解释器`c++`：[super tiny interpreter](./cpp-super-tiny-interpreter)
@@ -13,13 +13,14 @@
 - [x] 简单解释器基于栈机解释`js`：[tiny virtual machine](./tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`c++`：[tiny virtual machine](./cpp-tiny-virtual-machine)
 - [ ] 原型栈机解释器`js`
+    - [x] 一等公民函数
+    - [x] 嵌套函数声明
     - [ ] 对象数据类型
-    - [ ] 一等公民函数
     - [ ] 引用计数垃圾回收
-    - [ ] 嵌套函数声明
     - [ ] 函数表达式
     - [ ] 函数的call和apply方法
     - [ ] 基于原型的继承
+    - [ ] 闭包
     - [ ] 对undefined的全局绑定
     - [ ] try-catch-finally语句
 - [ ] 原型栈机解释器`c++`
