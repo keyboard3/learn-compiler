@@ -1,4 +1,4 @@
-import { ASTNode, ASTNodeType, ATOM_TYPE, DATUM_TYPE, OP_TYPE, SYMOBL_TYPE, _Atom, _Context, _Datum, _Function, _Property, _Scope, _Script, _Symbol } from "./models";
+import { ASTNode, ASTNodeType, ATOM_TYPE, DATUM_TYPE, OP_TYPE, SYMOBL_TYPE, TokenType, _Atom, _Context, _Datum, _Function, _Property, _Scope, _Script, _Symbol } from "./models";
 /**
  * 语义解析生成字节码
  */
@@ -77,6 +77,9 @@ function generateCode(context: _Context, script: _Script, node: ASTNode, offset:
             break;
         case ASTNodeType.Identifier:
             appendBuffer(OP_TYPE.NAME, getAtomIndex(ATOM_TYPE.NAME, node.token.text));
+            break;
+        case ASTNodeType.Primary:
+            if (node.token.text == "this") appendBuffer(OP_TYPE.THIS);
             break;
     }
     if (indent.length == 1) script.code = script.code.slice(0, offset);

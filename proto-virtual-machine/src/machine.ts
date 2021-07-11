@@ -1,4 +1,4 @@
-import { ATOM_TYPE, DATUM_TYPE, OP_TYPE, _Atom, _Context, _Datum, _Property, _Scope, _Script, _Symbol, _Frame, SYMOBL_TYPE } from "./models";
+import { ATOM_TYPE, DATUM_TYPE, OP_TYPE, _Atom, _Context, _Datum, _Property, _Scope, _Script, _Symbol, _Frame, SYMOBL_TYPE, _Object } from "./models";
 import * as lexer from "./lexer";
 import * as parser from "./parser";
 import * as bytecode from "./bytecode";
@@ -14,7 +14,7 @@ export default class VitrulMachine {
         const rootNode = parser.prog(tokens);
         bytecode.createCode(this.context, rootNode);
         const result = new _Datum(DATUM_TYPE.UNDEF);
-        this.codeInterpret(this.context, this.context.script, this.context.globalObject, result);
+        this.codeInterpret(this.context, this.context.script, this.context.staticLink, result);
         this.context.staticLink.list.forEach(item => {
             console.log(item.entry.key.val, item.entry.value);
         })
@@ -77,10 +77,13 @@ export default class VitrulMachine {
                     }
                     break;
                 case OP_TYPE.NUMBER:
-                    stack.push(atomTempDatum(getAtom()));
+                    stack.push(pushAtom(getAtom()));
                     break;
                 case OP_TYPE.NAME:
-                    stack.push(atomTempDatum(getAtom()));
+                    stack.push(pushAtom(getAtom()));
+                    break;
+                case OP_TYPE.THIS:
+                    stack.push(pushObject(context.globalObject));
                     break;
                 case OP_TYPE.ASSIGN:
                     {
@@ -213,9 +216,6 @@ export default class VitrulMachine {
                 return symbol;
             }
         }
-        function atomTempDatum(atom: _Atom) {
-            return new _Datum(DATUM_TYPE.ATOM, atom);
-        }
         function getAtom(): _Atom {
             return atoms[popBuffer()];
         }
@@ -225,6 +225,12 @@ export default class VitrulMachine {
             return index;
         }
     }
+}
+function pushAtom(atom: _Atom) {
+    return new _Datum(DATUM_TYPE.ATOM, atom);
+}
+function pushObject(object: _Object) {
+    return new _Datum(DATUM_TYPE.OBJECT, object);
 }
 
 function to_command_str(type) {
@@ -238,4 +244,5 @@ function to_command_str(type) {
     if (type == OP_TYPE.CALL) return "call";
     if (type == OP_TYPE.NEW) return "new";
     if (type == OP_TYPE.RETURN) return "return";
+    if (type == OP_TYPE.THIS) return "this";
 }

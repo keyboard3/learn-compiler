@@ -84,7 +84,7 @@ export const defineKeywords = {
   "goto": TokenType.RESERVED,
   "implements": TokenType.RESERVED,
   "import": TokenType.RESERVED,
-  "instanceof": TokenType.RESERVED,
+  "instanceof ": TokenType.RESERVED,
   "int": TokenType.RESERVED,
   "interface": TokenType.RESERVED,
   "long": TokenType.RESERVED,
@@ -239,11 +239,11 @@ export class TokenStream {
 export class _Context {
   constructor() {
     this.stack = new _Stack();
-    this.globalObject = new _Scope();
-    this.staticLink = this.globalObject;
+    this.globalObject = new _Object();
+    this.staticLink = this.globalObject.scope;
   }
   staticLink: _Scope;//静态作用域
-  globalObject: _Scope;//顶级作用域
+  globalObject: _Object;//顶级作用域
   stack: _Stack;//执行的全局操作数存储区
   script: _Script;
 }
@@ -358,7 +358,7 @@ export enum DATUM_TYPE {
   BOOL,
   UNDEF,
 }
-type DATUM_VALUE = _Atom | _Function | _Symbol | number | boolean | string | _Scope;
+type DATUM_VALUE = _Atom | _Function | _Symbol | number | boolean | string | _Object;
 export class _Datum {
   constructor(flag: DATUM_TYPE, value?: DATUM_VALUE) {
     this.flag = flag;
@@ -368,10 +368,10 @@ export class _Datum {
     if (flag == DATUM_TYPE.STRING) this.sval = value as string;
     if (flag == DATUM_TYPE.NUMBER) this.nval = value as number;
     if (flag == DATUM_TYPE.BOOL) this.bval = value as boolean;
-    if (flag == DATUM_TYPE.OBJECT) this.object = value as _Scope;
+    if (flag == DATUM_TYPE.OBJECT) this.object = value as _Object;
   }
   atom: _Atom;
-  object: _Scope;
+  object: _Object;
   fun: _Function;
   symbol: _Symbol;
   nval: number;
@@ -387,6 +387,13 @@ export class _Scope {
   parent: _Scope | null;
 }
 
+export class _Object {
+  constructor() {
+    this.scope = new _Scope();
+  }
+  scope: _Scope;
+}
+
 export enum OP_TYPE {
   NUMBER,
   NAME,
@@ -399,4 +406,5 @@ export enum OP_TYPE {
   ASSIGN,
   RETURN,
   CALL,
+  THIS
 }
