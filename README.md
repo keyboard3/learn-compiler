@@ -12,17 +12,16 @@
 - [x] 超简单解释器基于栈机解释`c++`：[super tiny virtual machine](./cpp-super-tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`js`：[tiny virtual machine](./tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`c++`：[tiny virtual machine](./cpp-tiny-virtual-machine)
-- [ ] 原型栈机解释器`js`
-    - [x] 一等公民函数
-    - [x] 嵌套函数声明
+- [ ] 基于 babel 实现原型栈机解释器`js`
+    - [ ] 基础类型
+    - [ ] 算数表达式
+    - [ ] 一等公民函数
+    - [ ] 嵌套函数声明
     - [ ] 对象数据类型
-    - [ ] 引用计数垃圾回收
     - [ ] 函数表达式
-    - [ ] 函数的call和apply方法
+    - [ ] 函数的 call 和 apply 方法
     - [ ] 基于原型的继承
     - [ ] 闭包
-    - [ ] 对undefined的全局绑定
-    - [ ] try-catch-finally语句
-- [ ] 原型栈机解释器`c++`
-- [ ] 基于Babel的原型栈机
-- [ ] 面向TypeScript的简单栈机
+    - [ ] 对 undefined 的全局绑定
+    - [ ] try-catch-finally 语句
+- [ ] 跳过语法树基于字节码的原型栈机解释器`c++`
