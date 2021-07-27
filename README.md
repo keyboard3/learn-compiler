@@ -28,7 +28,16 @@
 - [x] 超简单解释器基于栈机解释`c++`：[super tiny virtual machine](./cpp-super-tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`js`：[tiny virtual machine](./tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`c++`：[tiny virtual machine](./cpp-tiny-virtual-machine)
-- [ ] [llvm-kaleidoscope](./kaleidoscope)
+- [ ] LLVM 第一个语言教程 [kaleidoscope](./kaleidoscope)
+    - [x] 词法分析
+    - [ ] 语法分析和抽象语法树
+    - [ ] 代码生成 LLVM IR
+    - [ ] 添加 JIT
+    - [ ] 扩展支持控制流
+    - [ ] 扩展支持用户定义操作符
+    - [ ] 扩展支持修改变量
+    - [ ] 编译成目标文件
+    - [ ] 支持 Debug
 - [ ] 基于 babel 实现原型栈机解释器`js`
     - [ ] 基础类型
     - [ ] 算数表达式
