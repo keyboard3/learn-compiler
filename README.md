@@ -28,6 +28,7 @@
 - [x] 超简单解释器基于栈机解释`c++`：[super tiny virtual machine](./cpp-super-tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`js`：[tiny virtual machine](./tiny-virtual-machine)
 - [x] 简单解释器基于栈机解释`c++`：[tiny virtual machine](./cpp-tiny-virtual-machine)
+- [ ] [llvm-kaleidoscope](./kaleidoscope)
 - [ ] 基于 babel 实现原型栈机解释器`js`
     - [ ] 基础类型
     - [ ] 算数表达式
