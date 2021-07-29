@@ -30,7 +30,7 @@
 - [x] 简单解释器基于栈机解释`c++`：[tiny virtual machine](./cpp-tiny-virtual-machine)
 - [ ] LLVM 第一个语言教程 [kaleidoscope](./kaleidoscope)
     - [x] 词法分析
-    - [ ] 语法分析和抽象语法树
+    - [x] 语法分析和抽象语法树
     - [ ] 代码生成 LLVM IR
     - [ ] 添加 JIT
     - [ ] 扩展支持控制流
