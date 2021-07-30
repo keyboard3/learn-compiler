@@ -4,3 +4,5 @@
 */.dist/*
 */.vscode/*
 */a.out**
+*/toy*
+.vscode/settings.json

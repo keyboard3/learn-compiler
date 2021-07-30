@@ -3,8 +3,8 @@
 
 ## 运行
 ```
-g++ -g -std=c++1z toy.cpp `llvm-config --cxxflags`
-./a.out
+g++ -g -std=c++1z toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core` -o toy
+./toy
 ```
 ## 进度
  - 词法分析
