@@ -14,3 +14,6 @@ g++ -g -std=c++1z toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs
     - 基础表达式解析
     - 二元表达式解析
     - 解析其余部分：函数定义
+-  生成 LLVM IR 代码
+   - 表达式代码生成
+   - 函数代码生成

@@ -387,11 +387,17 @@ static std::unique_ptr<FunctionAST> ParseTopLevelExpr()
 //===----------------------------------------------------------------------===//
 // Code Generation
 //===----------------------------------------------------------------------===//
-
-static std::unique_ptr<LLVMContext> TheContext;
-static std::unique_ptr<Module> TheModule;
-static std::unique_ptr<IRBuilder<>> Builder;
-static std::map<std::string, Value *> NamedValues;
+//这些全局变量目的都是为了生成IR
+//Value类标识SSA：静态一次性赋值。标识每个变量仅被赋值一次
+/**
+ * y :=1    y1:=1
+ * y :=2 => y2:=2
+ * x :=y    x1:=y2
+ **/
+static std::unique_ptr<LLVMContext> TheContext;    //保存了llvm构建的核心数据结构，包括常量池等
+static std::unique_ptr<Module> TheModule;          //存储代码段中所有函数和全局变量
+static std::unique_ptr<IRBuilder<>> Builder;       //简化指令生成的辅助对象，IRBuilder类模板可有用于跟踪当前指令的插入位置，还带有生成新指令的方法
+static std::map<std::string, Value *> NamedValues; //用于记录当前解析AST过程中遇到的作用域内的变量，相当于符号表。目前主要是函数的参数
 Value *LogErrorV(const char *Str)
 {
   LogError(Str);
@@ -400,11 +406,13 @@ Value *LogErrorV(const char *Str)
 
 Value *NumberExprAST::codegen()
 {
+  //APFloat (Arbitrary Precision Float 可用于存储任意精度的浮点数常量)
+  //这些数值字面量都被认为是常量，而常量共享同一份内存。猜测这个编译的elf文件结果应该存在数据段中
   return ConstantFP::get(*TheContext, APFloat(Val));
 }
 Value *VariableExprAST::codegen()
 {
-  //在函数中查找这个变量
+  //在函数中查找这个变量，目前可以认为所有变量都已经被提前定义好，都是函数调用传参的符号
   Value *V = NamedValues[Name];
   if (!V)
     LogErrorV("Unknow variable name");
@@ -416,17 +424,20 @@ Value *BinaryExprAST::codegen()
   Value *R = RHS->codegen();
   if (!L || !R)
     return nullptr;
+  //LLVM指令遵循严格约束，操作数必须是同一个类型，结果必须与操作数类型兼容
   switch (Op)
   {
   case '+':
+    //addtmp指令如何组织L,R的插入位置，通过IRbuilder的CreateFAdd来做。
     return Builder->CreateFAdd(L, R, "addtmp");
   case '-':
     return Builder->CreateFSub(L, R, "subtmp");
   case '*':
     return Builder->CreateFMul(L, R, "multmp");
   case '<':
+    //fcmp指令要求必须返回但比特类型，kaleidoscope只接收0.0或1.0
     L = Builder->CreateFCmpULT(L, R, "cmptmp");
-    //将0/1 bool值转成 0.0/1.0的double值
+    //需要通过下面的指令将0/1 bool值转成 0.0/1.0的double值
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   default:
     return LogErrorV("invalid binary operator");
@@ -434,7 +445,7 @@ Value *BinaryExprAST::codegen()
 }
 Value *CallExprAST::codegen()
 {
-  //在全局的模块表中查找函数名
+  //在全局的模块表中通过函数名查找函数
   Function *CalleeF = TheModule->getFunction(Callee);
   if (!CalleeF)
     return LogErrorV("Unknow function referenced");
@@ -454,48 +465,57 @@ Value *CallExprAST::codegen()
 }
 Function *PrototypeAST::codegen()
 {
+  //因为数据类型只支持double，所以构建的函数的类型就很固定 double(double,double) etc.
   std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(*TheContext));
   FunctionType *FT = FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
+  //创建一个函数附加到TheModule的符号表中，将函数放到由模块数据布局指定的程序地址空间中
+  //ExternalLinkage 表示该函数可能定义与函数之外，且可以被当前模块之外的函数调用
   Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
-  //给所有参数设置名称
+  //给函数的参数都设置上名字
   unsigned Idx = 0;
   for (auto &Arg : F->args())
     Arg.setName(Args[Idx++]);
   return F;
 }
+/**
+ * 这里存在一个bug。没有验证当前函数与已经前面定义的extern的函数签名。
+ **/
 Function *FunctionAST::codegen()
 {
-  //首先，从前面的extern声明中检查现有的函数
+  //首先，检查是否已经存在函数，extern声明会提前创建好只包含函数原型的函数
   Function *TheFunction = TheModule->getFunction(Proto->getName());
 
   if (!TheFunction)
-    TheFunction = Proto->codegen();
+    TheFunction = Proto->codegen(); //不存在就正常创建函数原型
 
   if (!TheFunction)
     return nullptr;
 
+  //这就说明代码存在函数重复定义，报错
   if (!TheFunction->empty())
     return (Function *)LogErrorV("Function cannot be redefined.");
 
-  //创建一个新的基础代码块插入这个位置
+  //创建一个新的基础代码块插入到指定函数的末尾
   BasicBlock *BB = BasicBlock::Create(*TheContext, "entry", TheFunction);
+  //让新指令的位置插入到新基础代码块的末尾
   Builder->SetInsertPoint(BB);
 
-  //记录函数参数到 NameValues map 中
+  //记录函数参数到 NameValues 中，为了后面生成函数体内变量的访问指令
   NamedValues.clear();
   for (auto &Arg : TheFunction->args())
     NamedValues[std::string(Arg.getName())] = &Arg;
 
+  //函数体的指令会填充到上面创建的entry代码块中
   if (Value *RetVal = Body->codegen())
   {
-    //完成函数
+    //这个指令用来从函数块中返回控制流到调用者
     Builder->CreateRet(RetVal);
 
-    //验证生成的代码，检查一致性
+    //验证生成的代码，检查一致性，保证编译的代码能够被正确执行
     verifyFunction(*TheFunction);
     return TheFunction;
   }
-  //读取函数body出错，删除函数
+  //出错，就从父模块中删除它
   TheFunction->eraseFromParent();
   return nullptr;
 }
@@ -509,7 +529,7 @@ static void InitializeModule()
   TheContext = std::make_unique<LLVMContext>();
   TheModule = std::make_unique<Module>("my cool jit", *TheContext);
 
-  // Create a new builder for the module.
+  // 为上下文创建新的Builder
   Builder = std::make_unique<IRBuilder<>>(*TheContext);
 }
 
@@ -519,7 +539,7 @@ static void HandleDefinition()
   {
     if (auto *FnIR = FnAST->codegen())
     {
-      fprintf(stderr, "Read function definition:");
+      fprintf(stderr, "Read function definition:\n");
       FnIR->print(errs());
       fprintf(stderr, "\n");
     }
@@ -533,7 +553,7 @@ static void HandleExtern()
   {
     if (auto *FnIR = ProtoAST->codegen())
     {
-      fprintf(stderr, "Read extern: ");
+      fprintf(stderr, "Read extern: \n");
       FnIR->print(errs());
       fprintf(stderr, "\n");
     }
@@ -548,11 +568,11 @@ static void HandleTopLevelExpression()
   {
     if (auto *FnIR = FnAST->codegen())
     {
-      fprintf(stderr, "Read top-level expression:");
+      fprintf(stderr, "Read top-level expression:\n");
       FnIR->print(errs());
       fprintf(stderr, "\n");
 
-      //删除匿名表达式
+      //删除匿名表达式。防止前面的定义影响到后面
       FnIR->eraseFromParent();
     }
   }
@@ -564,12 +584,12 @@ static void MainLoop()
 {
   while (1)
   {
-    fprintf(stderr, "ready> ");
     switch (CurTok)
     {
     case tok_eof:
       return;
-    case ';': //忽略顶层表达式的；
+    case ';': //忽略顶层表达式的；继续阻塞读取下个token
+      fprintf(stderr, "ready> ");
       getNextToken();
       break;
     case tok_def:
@@ -598,8 +618,8 @@ int main()
   BinopPrecedence['-'] = 20;
   BinopPrecedence['*'] = 40; // 最高.
 
-  fprintf(stderr, "ready> ");
   //准备好当前的CurTok
+  fprintf(stderr, "ready> ");
   getNextToken();
 
   // 构建持有所有代码的模块
