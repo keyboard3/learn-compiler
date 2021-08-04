@@ -1,9 +1,18 @@
 ## 前言
 来源[我的第一个语言前端与 LLVM 教程](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html)
 
-## 运行
+## 运行步骤
+- 准备构建安装 llvm4.0
+因为brew已经没有llvm@4了，所以需要我们自己构建
 ```
-g++ -g -std=c++1z toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core` -o toy
+git clone https://github.com/llvm/llvm-project.git -b 4.0 —depth 1
+cd llvm-project && mkdir build && cd build
+cmake ..
+cmake —build . —target install
+```
+- 解释运行
+```
+make
 ./toy
 ```
 ## 进度
@@ -17,3 +26,7 @@ g++ -g -std=c++1z toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs
 -  生成 LLVM IR 代码
    - 表达式代码生成
    - 函数代码生成
+- 添加即时编译和代码优化
+   - 常见的常量折叠
+   - LLVM 优化通道
+   - 添加即时编译

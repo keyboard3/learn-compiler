@@ -1,3 +1,4 @@
+#include "./include/KaleidoscopeJIT.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/BasicBlock.h"
@@ -6,14 +7,22 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/GVN.h"
+#include "cassert"
 #include "algorithm"
 #include "string"
 #include "vector"
 #include "map"
 using namespace llvm;
+using namespace llvm::orc;
 
 //===----------------------------------------------------------------------===//
 // Lexer
@@ -218,7 +227,7 @@ std::unique_ptr<ExprAST> ParsePrimary()
 // 解析数字字面量表达式 numberexper ::= number
 static std::unique_ptr<ExprAST> ParseNumberExpr()
 {
-  auto Result = std::make_unique<NumberExprAST>(NumVal);
+  auto Result = llvm::make_unique<NumberExprAST>(NumVal);
   getNextToken(); // eat the number
   return std::move(Result);
 }
@@ -243,7 +252,7 @@ std::unique_ptr<ExprAST> ParseIdentifierExpr()
   std::string IdName = IdentifierStr;
   getNextToken(); // eat identifier
   if (CurTok != '(')
-    return std::make_unique<VariableExprAST>(IdName);
+    return llvm::make_unique<VariableExprAST>(IdName);
 
   //说明这个是调用表达式了
   getNextToken(); // eat (
@@ -267,7 +276,7 @@ std::unique_ptr<ExprAST> ParseIdentifierExpr()
   }
   //eat )
   getNextToken();
-  return std::make_unique<CallExprAST>(IdName, move(Args));
+  return llvm::make_unique<CallExprAST>(IdName, move(Args));
 }
 // BinopPrecedence - 定义了每个二元操作符的优先级
 // 数值越高，优先级越高
@@ -323,7 +332,7 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec, std::unique_ptr<Expr
         return nullptr;
     }
     //合并LHS和RHS两个节点以及操作符BinOp 结合成相对于后面的LHS节点
-    LHS = std::make_unique<BinaryExprAST>(BinOp, move(LHS), move(RHS));
+    LHS = llvm::make_unique<BinaryExprAST>(BinOp, move(LHS), move(RHS));
   }
 }
 // prototype ::= id '(' id* ')'
@@ -347,7 +356,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype()
     return LogErrorP("Expected ')' in prototype");
 
   getNextToken(); //eat ')'
-  return std::make_unique<PrototypeAST>(FnName, move(ArgNames));
+  return llvm::make_unique<PrototypeAST>(FnName, move(ArgNames));
 }
 // definition ::= 'def' prototype expression
 // 解析函数整体定义，包括函数基础元素以及函数体
@@ -360,7 +369,7 @@ static std::unique_ptr<FunctionAST> ParseDefinition()
 
   //解析函数体，应该下面表达式解析目前不支持块，所以现在只是单行函数体
   if (auto E = ParseExpression())
-    return std::make_unique<FunctionAST>(move(Proto), move(E));
+    return llvm::make_unique<FunctionAST>(move(Proto), move(E));
   return nullptr;
 }
 // external ::= 'extern' prototype
@@ -377,9 +386,9 @@ static std::unique_ptr<FunctionAST> ParseTopLevelExpr()
   if (auto E = ParseExpression())
   {
     // 构建一个匿名的proto 函数基础信息
-    auto Proto = std::make_unique<PrototypeAST>("", std::vector<std::string>());
+    auto Proto = llvm::make_unique<PrototypeAST>("__anon_expr", std::vector<std::string>());
     //将顶层没有函数包裹的代码丢到匿名的函数体中
-    return std::make_unique<FunctionAST>(move(Proto), move(E));
+    return llvm::make_unique<FunctionAST>(move(Proto), move(E));
   }
   return nullptr;
 }
@@ -394,10 +403,13 @@ static std::unique_ptr<FunctionAST> ParseTopLevelExpr()
  * y :=2 => y2:=2
  * x :=y    x1:=y2
  **/
-static std::unique_ptr<LLVMContext> TheContext;    //保存了llvm构建的核心数据结构，包括常量池等
-static std::unique_ptr<Module> TheModule;          //存储代码段中所有函数和全局变量
-static std::unique_ptr<IRBuilder<>> Builder;       //简化指令生成的辅助对象，IRBuilder类模板可有用于跟踪当前指令的插入位置，还带有生成新指令的方法
-static std::map<std::string, Value *> NamedValues; //用于记录当前解析AST过程中遇到的作用域内的变量，相当于符号表。目前主要是函数的参数
+static LLVMContext TheContext;                              //保存了llvm构建的核心数据结构，包括常量池等
+static IRBuilder<> Builder(TheContext);                     //简化指令生成的辅助对象，IRBuilder类模板可有用于跟踪当前指令的插入位置，还带有生成新指令的方法
+static std::unique_ptr<Module> TheModule;                   //存储代码段中所有函数和全局变量
+static std::map<std::string, Value *> NamedValues;          //用于记录当前解析AST过程中遇到的作用域内的变量，相当于符号表。目前主要是函数的参数
+static std::unique_ptr<legacy::FunctionPassManager> TheFPM; //优化通道管理器
+static std::unique_ptr<KaleidoscopeJIT> TheJIT;
+static std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 Value *LogErrorV(const char *Str)
 {
   LogError(Str);
@@ -408,7 +420,7 @@ Value *NumberExprAST::codegen()
 {
   //APFloat (Arbitrary Precision Float 可用于存储任意精度的浮点数常量)
   //这些数值字面量都被认为是常量，而常量共享同一份内存。猜测这个编译的elf文件结果应该存在数据段中
-  return ConstantFP::get(*TheContext, APFloat(Val));
+  return ConstantFP::get(TheContext, APFloat(Val));
 }
 Value *VariableExprAST::codegen()
 {
@@ -429,24 +441,37 @@ Value *BinaryExprAST::codegen()
   {
   case '+':
     //addtmp指令如何组织L,R的插入位置，通过IRbuilder的CreateFAdd来做。
-    return Builder->CreateFAdd(L, R, "addtmp");
+    return Builder.CreateFAdd(L, R, "addtmp");
   case '-':
-    return Builder->CreateFSub(L, R, "subtmp");
+    return Builder.CreateFSub(L, R, "subtmp");
   case '*':
-    return Builder->CreateFMul(L, R, "multmp");
+    return Builder.CreateFMul(L, R, "multmp");
   case '<':
     //fcmp指令要求必须返回但比特类型，kaleidoscope只接收0.0或1.0
-    L = Builder->CreateFCmpULT(L, R, "cmptmp");
+    L = Builder.CreateFCmpULT(L, R, "cmptmp");
     //需要通过下面的指令将0/1 bool值转成 0.0/1.0的double值
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+    return Builder.CreateUIToFP(L, Type::getDoubleTy(TheContext), "booltmp");
   default:
     return LogErrorV("invalid binary operator");
   }
 }
+Function *getFunction(std::string Name)
+{
+  //首先，如果这个函数名以及被定义到这个模块中
+  if (auto *F = TheModule->getFunction(Name))
+    return F;
+  //如果没有，检查我们是否可以从以及存在的函数prototype中生成代码
+  auto FI = FunctionProtos.find(Name);
+  if (FI != FunctionProtos.end())
+    return FI->second->codegen();
+
+  //如果不存在原型，返回null
+  return nullptr;
+}
 Value *CallExprAST::codegen()
 {
   //在全局的模块表中通过函数名查找函数
-  Function *CalleeF = TheModule->getFunction(Callee);
+  Function *CalleeF = getFunction(Callee);
   if (!CalleeF)
     return LogErrorV("Unknow function referenced");
 
@@ -461,13 +486,13 @@ Value *CallExprAST::codegen()
     if (!ArgsV.back())
       return nullptr;
   }
-  return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
+  return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
 }
 Function *PrototypeAST::codegen()
 {
   //因为数据类型只支持double，所以构建的函数的类型就很固定 double(double,double) etc.
-  std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(*TheContext));
-  FunctionType *FT = FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
+  std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(TheContext));
+  FunctionType *FT = FunctionType::get(Type::getDoubleTy(TheContext), Doubles, false);
   //创建一个函数附加到TheModule的符号表中，将函数放到由模块数据布局指定的程序地址空间中
   //ExternalLinkage 表示该函数可能定义与函数之外，且可以被当前模块之外的函数调用
   Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
@@ -482,9 +507,14 @@ Function *PrototypeAST::codegen()
  **/
 Function *FunctionAST::codegen()
 {
-  //首先，检查是否已经存在函数，extern声明会提前创建好只包含函数原型的函数
-  Function *TheFunction = TheModule->getFunction(Proto->getName());
+  //将函数原型的放到FunctionProtos下持有一份,后面会用到
+  auto &P = *Proto;
+  FunctionProtos[Proto->getName()] = std::move(Proto);
+  Function *TheFunction = getFunction(P.getName());
+  if (!TheFunction)
+    return nullptr;
 
+  //首先，检查是否已经存在函数，extern声明会提前创建好只包含函数原型的函数
   if (!TheFunction)
     TheFunction = Proto->codegen(); //不存在就正常创建函数原型
 
@@ -496,9 +526,9 @@ Function *FunctionAST::codegen()
     return (Function *)LogErrorV("Function cannot be redefined.");
 
   //创建一个新的基础代码块插入到指定函数的末尾
-  BasicBlock *BB = BasicBlock::Create(*TheContext, "entry", TheFunction);
+  BasicBlock *BB = BasicBlock::Create(TheContext, "entry", TheFunction);
   //让新指令的位置插入到新基础代码块的末尾
-  Builder->SetInsertPoint(BB);
+  Builder.SetInsertPoint(BB);
 
   //记录函数参数到 NameValues 中，为了后面生成函数体内变量的访问指令
   NamedValues.clear();
@@ -509,10 +539,14 @@ Function *FunctionAST::codegen()
   if (Value *RetVal = Body->codegen())
   {
     //这个指令用来从函数块中返回控制流到调用者
-    Builder->CreateRet(RetVal);
+    Builder.CreateRet(RetVal);
 
     //验证生成的代码，检查一致性，保证编译的代码能够被正确执行
     verifyFunction(*TheFunction);
+
+    //在返回之前优化函数代码
+    TheFPM->run(*TheFunction);
+
     return TheFunction;
   }
   //出错，就从父模块中删除它
@@ -523,14 +557,24 @@ Function *FunctionAST::codegen()
 //===----------------------------------------------------------------------===//
 // Top-Level parsing
 //===----------------------------------------------------------------------===//
-static void InitializeModule()
+static void InitializeModuleAndPassManager()
 {
   // 打开一个新的 context and module.
-  TheContext = std::make_unique<LLVMContext>();
-  TheModule = std::make_unique<Module>("my cool jit", *TheContext);
+  TheModule = llvm::make_unique<Module>("my cool jit", TheContext);
+  TheModule->setDataLayout(TheJIT->getTargetMachine().createDataLayout());
 
-  // 为上下文创建新的Builder
-  Builder = std::make_unique<IRBuilder<>>(*TheContext);
+  //创建一个新的通道管理，并添加给Module
+  TheFPM = llvm::make_unique<legacy::FunctionPassManager>(TheModule.get());
+  //做简单的peephole优化以及位处理optzns
+  TheFPM->add(createInstructionCombiningPass());
+  //重新关联表达式
+  TheFPM->add(createReassociatePass());
+  //消除公共子表达式
+  TheFPM->add(createGVNPass());
+  //简化控制流图(删除无法触达的代码块等)
+  TheFPM->add(createCFGSimplificationPass());
+
+  TheFPM->doInitialization();
 }
 
 static void HandleDefinition()
@@ -542,6 +586,10 @@ static void HandleDefinition()
       fprintf(stderr, "Read function definition:\n");
       FnIR->print(errs());
       fprintf(stderr, "\n");
+      //即时编译当前函数定义的模块
+      TheJIT->addModule(std::move(TheModule));
+      //并创建一个新的模块
+      InitializeModuleAndPassManager();
     }
   }
   else
@@ -556,6 +604,8 @@ static void HandleExtern()
       fprintf(stderr, "Read extern: \n");
       FnIR->print(errs());
       fprintf(stderr, "\n");
+
+      FunctionProtos[ProtoAST->getName()] = std::move(ProtoAST);
     }
   }
   else
@@ -572,8 +622,22 @@ static void HandleTopLevelExpression()
       FnIR->print(errs());
       fprintf(stderr, "\n");
 
-      //删除匿名表达式。防止前面的定义影响到后面
-      FnIR->eraseFromParent();
+      //及时编译这个模块包含的匿名表达式，持有这个handle,稍后我们会释放它
+      //addModule会触发这个模块下的所有函数代码生成，返回handle可以被移除
+      auto H = TheJIT->addModule(std::move(TheModule));
+      //一旦Module添加到JIT就不能修改。所以需要调用来创建一个新的模块保存后续代码
+      InitializeModuleAndPassManager();
+
+      //在JIT中搜索这个__anon_expr符号。获取到指向刚刚生成代码的指针
+      auto ExprSymbol = TheJIT->findSymbol("__anon_expr");
+      assert(ExprSymbol && "Function not found");
+
+      //获得符号地址并转成正确的函数类型(没参数，返回double)，所以我们可以把它作为原生函数调用
+      double (*FP)() = (double (*)())(intptr_t)ExprSymbol.getAddress();
+      fprintf(stderr, "Evaluated to %f\n", FP());
+
+      //因为我们不支持重新定义顶层表达式，所以需要执行完毕删除，下次创建新的
+      TheJIT->removeModule(H);
     }
   }
   else
@@ -604,13 +668,35 @@ static void MainLoop()
     }
   }
 }
+//===----------------------------------------------------------------------===//
+// "Library" functions that can be "extern'd" from user code.
+//===----------------------------------------------------------------------===//
+
+/// putchard - putchar that takes a double and returns 0.
+extern "C" double putchard(double X)
+{
+  fputc((char)X, stderr);
+  return 0;
+}
+
+/// printd - printf that takes a double prints it as "%f\n", returning 0.
+extern "C" double printd(double X)
+{
+  fprintf(stderr, "%f\n", X);
+  return 0;
+}
 
 //===----------------------------------------------------------------------===//
 // Main driver code.
 //===----------------------------------------------------------------------===//
+//请注意，对于 Windows，我们需要实际导出函数，因为动态符号加载器将使用 GetProcAddress 来查找符号。
 
 int main()
 {
+  InitializeNativeTarget();
+  InitializeNativeTargetAsmPrinter();
+  InitializeNativeTargetAsmParser();
+
   // 准备二元操作符优先级
   // 1 是最小的优先级.
   BinopPrecedence['<'] = 10;
@@ -622,8 +708,9 @@ int main()
   fprintf(stderr, "ready> ");
   getNextToken();
 
-  // 构建持有所有代码的模块
-  InitializeModule();
+  TheJIT = llvm::make_unique<KaleidoscopeJIT>();
+
+  InitializeModuleAndPassManager();
 
   //运行解析执行循环
   MainLoop();
