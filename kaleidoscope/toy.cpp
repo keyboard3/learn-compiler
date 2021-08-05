@@ -40,6 +40,10 @@ enum Token
   //primary 基础元素
   tok_identifier = -4,
   tok_number = -5,
+  //control
+  tok_if = -6,
+  tok_then = -7,
+  tok_else = -8
 };
 // gettok - 从标准输入中返回下一个token
 static int gettok()
@@ -61,6 +65,12 @@ static int gettok()
       return tok_def;
     if (IdentifierStr == "extern")
       return tok_extern;
+    if (IdentifierStr == "if")
+      return tok_if;
+    if (IdentifierStr == "then")
+      return tok_then;
+    if (IdentifierStr == "else")
+      return tok_else;
     return tok_identifier;
   }
 
@@ -144,10 +154,10 @@ namespace
   class CallExprAST : public ExprAST
   {
     std::string Callee;
-    std::vector<std::unique_ptr<ExprAST>> Args;
+    std::vector<std::unique_ptr<ExprAST> > Args;
 
   public:
-    CallExprAST(const std::string &Callee, std::vector<std::unique_ptr<ExprAST>> Args) : Callee(Callee), Args(move(Args)) {}
+    CallExprAST(const std::string &Callee, std::vector<std::unique_ptr<ExprAST> > Args) : Callee(Callee), Args(move(Args)) {}
     Value *codegen() override;
   };
   // PrototypeAST - 表示函数的原型节点（包含函数自身的信息）
@@ -172,6 +182,16 @@ namespace
   public:
     FunctionAST(std::unique_ptr<PrototypeAST> Proto, std::unique_ptr<ExprAST> Body) : Proto(move(Proto)), Body(move(Body)) {}
     Function *codegen();
+  };
+  // IfExprAST - if/then/else的表达式节点
+  class IfExprAST : public ExprAST
+  {
+    std::unique_ptr<ExprAST> Cond, Then, Else;
+
+  public:
+    IfExprAST(std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Then, std::unique_ptr<ExprAST> Else)
+        : Cond(std::move(Cond)), Then(std::move(Then)), Else(std::move(Else)) {}
+    Value *codegen() override;
   };
 }
 //===----------------------------------------------------------------------===//
@@ -204,12 +224,14 @@ static std::unique_ptr<ExprAST> ParseExpression();
 static std::unique_ptr<ExprAST> ParseNumberExpr();
 static std::unique_ptr<ExprAST> ParseParenExpr();
 static std::unique_ptr<ExprAST> ParseIdentifierExpr();
+static std::unique_ptr<ExprAST> ParseIfExpr();
 
 // 最基础的元素如数据等
 // primary
 //   ::= identifierexpr
 //   ::= numberexpr
 //   ::= parenexpr
+//   ::= ifexpr
 std::unique_ptr<ExprAST> ParsePrimary()
 {
   switch (CurTok)
@@ -222,6 +244,8 @@ std::unique_ptr<ExprAST> ParsePrimary()
     return ParseNumberExpr();
   case '(':
     return ParseParenExpr();
+  case tok_if:
+    return ParseIfExpr();
   }
 }
 // 解析数字字面量表达式 numberexper ::= number
@@ -256,7 +280,7 @@ std::unique_ptr<ExprAST> ParseIdentifierExpr()
 
   //说明这个是调用表达式了
   getNextToken(); // eat (
-  std::vector<std::unique_ptr<ExprAST>> Args;
+  std::vector<std::unique_ptr<ExprAST> > Args;
   if (CurTok != ')')
   {
     while (1)
@@ -358,6 +382,32 @@ static std::unique_ptr<PrototypeAST> ParsePrototype()
   getNextToken(); //eat ')'
   return llvm::make_unique<PrototypeAST>(FnName, move(ArgNames));
 }
+// ifexpr ::= 'if' expression 'then' expression 'else' expression
+static std::unique_ptr<ExprAST> ParseIfExpr()
+{
+  getNextToken(); // eat if
+
+  auto Cond = ParseExpression();
+  if (!Cond)
+    return nullptr;
+  if (CurTok != tok_then)
+    return LogError("expected then");
+
+  getNextToken(); // eat then
+  auto Then = ParseExpression();
+  if (!Then)
+    return nullptr;
+  if (CurTok != tok_else)
+    return LogError("expected else");
+
+  getNextToken(); // eat else
+  auto Else = ParseExpression();
+  if (!Else)
+    return nullptr;
+
+  return llvm::make_unique<IfExprAST>(std::move(Cond), std::move(Then), std::move(Else));
+}
+
 // definition ::= 'def' prototype expression
 // 解析函数整体定义，包括函数基础元素以及函数体
 static std::unique_ptr<FunctionAST> ParseDefinition()
@@ -409,7 +459,7 @@ static std::unique_ptr<Module> TheModule;                   //存储代码段中
 static std::map<std::string, Value *> NamedValues;          //用于记录当前解析AST过程中遇到的作用域内的变量，相当于符号表。目前主要是函数的参数
 static std::unique_ptr<legacy::FunctionPassManager> TheFPM; //优化通道管理器
 static std::unique_ptr<KaleidoscopeJIT> TheJIT;
-static std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
+static std::map<std::string, std::unique_ptr<PrototypeAST> > FunctionProtos;
 Value *LogErrorV(const char *Str)
 {
   LogError(Str);
@@ -555,7 +605,55 @@ Function *FunctionAST::codegen()
   TheFunction->eraseFromParent();
   return nullptr;
 }
+//因为目前这个语言只有表达式，表达式和语句的区别在于，表达式可以被求值，语句是不可被求值的
+//所以这里设计if语句类似于三元表达式，需要返回if/else的代码块的结果
+Value *IfExprAST::codegen()
+{
+  Value *CondV = Cond->codegen();
+  if (!CondV)
+    return nullptr;
 
+  //因为CondV的结果是数字类型，所以RHS是相同的数字类型为0.0
+  //如果操作数结果不相同就是true,否则就是false
+  CondV = Builder.CreateFCmpONE(CondV, ConstantFP::get(TheContext, APFloat(0.0)), "ifcond");
+  Function *TheFunction = Builder.GetInsertBlock()->getParent();
+  //创建两个then和else代码块
+  BasicBlock *ThenBB = BasicBlock::Create(TheContext, "then", TheFunction);
+  BasicBlock *ElseBB = BasicBlock::Create(TheContext, "else");
+  BasicBlock *MergeBB = BasicBlock::Create(TheContext, "ifcont");
+
+  //根据ConV结果跳转响应的块
+  Builder.CreateCondBr(CondV, ThenBB, ElseBB);
+  //生成then块的代码
+  Builder.SetInsertPoint(ThenBB);
+  Value *ThenV = Then->codegen();
+  //LLVM IR重要的一点是，要求所有基本块都用控制流指令终止（如return/branch）,意味着所有控制流都需要显示的处理失败
+  if (!ThenV)
+    return nullptr;
+  //then代码结束之后跳转到ifcont块
+  Builder.CreateBr(MergeBB);
+  //因为为了生成Then的代码块指令，所以改变了当前代码块ThenBB的指向，所以更新回来
+  ThenBB = Builder.GetInsertBlock();
+
+  //将else代码块添加到Funciton中
+  TheFunction->getBasicBlockList().push_back(ElseBB);
+  //为else块创建代码
+  Builder.SetInsertPoint(ElseBB);
+  Value *ElseV = Else->codegen();
+  if (!ElseV)
+    return nullptr;
+  Builder.CreateBr(MergeBB);
+  ElseBB = Builder.GetInsertBlock();
+
+  //生成merge代码块
+  TheFunction->getBasicBlockList().push_back(MergeBB);
+  Builder.SetInsertPoint(MergeBB);
+  PHINode *PN = Builder.CreatePHI(Type::getDoubleTy(TheContext), 2, "iftmp");
+  PN->addIncoming(ThenV, ThenBB);
+  PN->addIncoming(ElseV, ElseBB);
+  //返回的phi节点会计算来自那个块，返回响应的块结果V
+  return PN;
+}
 //===----------------------------------------------------------------------===//
 // Top-Level parsing
 //===----------------------------------------------------------------------===//
@@ -574,7 +672,7 @@ static void InitializeModuleAndPassManager()
   //消除公共子表达式
   TheFPM->add(createGVNPass());
   //简化控制流图(删除无法触达的代码块等)
-  TheFPM->add(createCFGSimplificationPass());
+  // TheFPM->add(createCFGSimplificationPass());
 
   TheFPM->doInitialization();
 }
