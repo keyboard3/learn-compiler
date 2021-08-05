@@ -486,6 +486,8 @@ Value *CallExprAST::codegen()
     if (!ArgsV.back())
       return nullptr;
   }
+  //生成函数调用IR指令，通过函数名在JIT中找符号，先从所有模块从后往前找最近的定义。找不到就去进程的符号表中找
+  //因为生成extern函数的模块没有添加到JIT中，所以最终会去进程中的符号表找
   return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
 }
 Function *PrototypeAST::codegen()
@@ -559,7 +561,7 @@ Function *FunctionAST::codegen()
 //===----------------------------------------------------------------------===//
 static void InitializeModuleAndPassManager()
 {
-  // 打开一个新的 context and module.
+  //创建一个新的module
   TheModule = llvm::make_unique<Module>("my cool jit", TheContext);
   TheModule->setDataLayout(TheJIT->getTargetMachine().createDataLayout());
 
@@ -604,7 +606,8 @@ static void HandleExtern()
       fprintf(stderr, "Read extern: \n");
       FnIR->print(errs());
       fprintf(stderr, "\n");
-
+      //将这个函数名的函数原型AST保存起来，函数调用表达式在生成IR代码的时候会检查它，然后生成调用指令。
+      //因为没有将这个模块添加到JIT，所以JIT在查找符号的时候从模块中找不到会从进程中找
       FunctionProtos[ProtoAST->getName()] = std::move(ProtoAST);
     }
   }
