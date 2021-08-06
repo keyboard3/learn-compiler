@@ -5,10 +5,10 @@
 - 准备构建安装 llvm4.0
 因为brew已经没有llvm@4了，所以需要我们自己构建
 ```
-git clone https://github.com/llvm/llvm-project.git -b 4.0 —depth 1
-cd llvm-project && mkdir build && cd build
+git clone -b 4.0 --depth 1 https://github.com/llvm/llvm-project.git
+cd llvm-project && cd llvm && mkdir build && cd build
 cmake ..
-cmake —build . —target install
+cmake —build . --target install
 ```
 - 解释运行
 ```

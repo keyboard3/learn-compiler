@@ -43,7 +43,9 @@ enum Token
   //control
   tok_if = -6,
   tok_then = -7,
-  tok_else = -8
+  tok_else = -8,
+  tok_for = -9,
+  tok_in = -10
 };
 // gettok - 从标准输入中返回下一个token
 static int gettok()
@@ -71,6 +73,10 @@ static int gettok()
       return tok_then;
     if (IdentifierStr == "else")
       return tok_else;
+    if (IdentifierStr == "for")
+      return tok_for;
+    if (IdentifierStr == "in")
+      return tok_in;
     return tok_identifier;
   }
 
@@ -154,10 +160,10 @@ namespace
   class CallExprAST : public ExprAST
   {
     std::string Callee;
-    std::vector<std::unique_ptr<ExprAST> > Args;
+    std::vector<std::unique_ptr<ExprAST>> Args;
 
   public:
-    CallExprAST(const std::string &Callee, std::vector<std::unique_ptr<ExprAST> > Args) : Callee(Callee), Args(move(Args)) {}
+    CallExprAST(const std::string &Callee, std::vector<std::unique_ptr<ExprAST>> Args) : Callee(Callee), Args(move(Args)) {}
     Value *codegen() override;
   };
   // PrototypeAST - 表示函数的原型节点（包含函数自身的信息）
@@ -193,6 +199,16 @@ namespace
         : Cond(std::move(Cond)), Then(std::move(Then)), Else(std::move(Else)) {}
     Value *codegen() override;
   };
+  class ForExprAST : public ExprAST
+  {
+    std ::string VarName;
+    std ::unique_ptr<ExprAST> Start, End, Step, Body;
+
+  public:
+    ForExprAST(const std::string &VarName, std::unique_ptr<ExprAST> Start, std::unique_ptr<ExprAST> End, std::unique_ptr<ExprAST> Step, std::unique_ptr<ExprAST> Body)
+        : VarName(VarName), Start(std::move(Start)), End(std::move(End)), Step(std::move(Step)), Body(std::move(Body)) {}
+    Value *codegen() override;
+  };
 }
 //===----------------------------------------------------------------------===//
 // Parser
@@ -225,6 +241,7 @@ static std::unique_ptr<ExprAST> ParseNumberExpr();
 static std::unique_ptr<ExprAST> ParseParenExpr();
 static std::unique_ptr<ExprAST> ParseIdentifierExpr();
 static std::unique_ptr<ExprAST> ParseIfExpr();
+static std::unique_ptr<ExprAST> ParseForExpr();
 
 // 最基础的元素如数据等
 // primary
@@ -246,6 +263,8 @@ std::unique_ptr<ExprAST> ParsePrimary()
     return ParseParenExpr();
   case tok_if:
     return ParseIfExpr();
+  case tok_for:
+    return ParseForExpr();
   }
 }
 // 解析数字字面量表达式 numberexper ::= number
@@ -280,7 +299,7 @@ std::unique_ptr<ExprAST> ParseIdentifierExpr()
 
   //说明这个是调用表达式了
   getNextToken(); // eat (
-  std::vector<std::unique_ptr<ExprAST> > Args;
+  std::vector<std::unique_ptr<ExprAST>> Args;
   if (CurTok != ')')
   {
     while (1)
@@ -407,6 +426,52 @@ static std::unique_ptr<ExprAST> ParseIfExpr()
 
   return llvm::make_unique<IfExprAST>(std::move(Cond), std::move(Then), std::move(Else));
 }
+// forexpr ::= 'for' identifier '=' expr ',' expr (',' expr)? 'in' expression
+// 例子 for i=1,i<5 in i=i+1、 for i=1,i<5,2 in i=i+1
+static std::unique_ptr<ExprAST> ParseForExpr()
+{
+  getNextToken(); // eat for
+  if (CurTok != tok_identifier)
+    return LogError("expected indentifier after for");
+
+  std::string IdName = IdentifierStr;
+  getNextToken(); // eat identifier
+
+  if (CurTok != '=')
+    return LogError("expected '=' after for");
+  getNextToken(); // eat '='
+
+  auto Start = ParseExpression();
+  if (!Start)
+    return nullptr;
+  if (CurTok != ',')
+    return LogError("expected ',' after for start value");
+  getNextToken(); //eat ','
+
+  auto End = ParseExpression();
+  if (!End)
+    return nullptr;
+
+  //循环的step可选，默认是1
+  std::unique_ptr<ExprAST> Step;
+  if (CurTok == ',')
+  {
+    getNextToken(); // eat ','
+    Step = ParseExpression();
+    if (!Step)
+      return nullptr;
+  }
+
+  if (CurTok != tok_in)
+    return LogError("expected 'in' after for");
+  getNextToken(); //eat in
+
+  auto Body = ParseExpression();
+  if (!Body)
+    return nullptr;
+
+  return llvm::make_unique<ForExprAST>(IdName, move(Start), move(End), move(Step), move(Body));
+}
 
 // definition ::= 'def' prototype expression
 // 解析函数整体定义，包括函数基础元素以及函数体
@@ -459,7 +524,7 @@ static std::unique_ptr<Module> TheModule;                   //存储代码段中
 static std::map<std::string, Value *> NamedValues;          //用于记录当前解析AST过程中遇到的作用域内的变量，相当于符号表。目前主要是函数的参数
 static std::unique_ptr<legacy::FunctionPassManager> TheFPM; //优化通道管理器
 static std::unique_ptr<KaleidoscopeJIT> TheJIT;
-static std::map<std::string, std::unique_ptr<PrototypeAST> > FunctionProtos;
+static std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 Value *LogErrorV(const char *Str)
 {
   LogError(Str);
@@ -653,6 +718,77 @@ Value *IfExprAST::codegen()
   PN->addIncoming(ElseV, ElseBB);
   //返回的phi节点会计算来自那个块，返回响应的块结果V
   return PN;
+}
+/**
+ * for i=1,i<n,1.0 in putchard(42);
+ * entry: 
+ *  ->loop
+ * loop: entry->i=1,loop->nextVar
+ *  [body] %calltmp = call double @putchard(double 42)
+ *  [increment] nextVar = fadd i
+ *  [termination] %loopcond = fcmp one %booltmp
+ *  br i1 %loopcond ? %loop label : %afterloop label
+ * afterloop:
+ *  return 0;
+*/
+Value *ForExprAST::codegen()
+{
+  //Start表达式代码生成
+  Value *StartVal = Start->codegen();
+  if (!StartVal)
+    return nullptr;
+  //为循环头新增一个基础块
+  Function *TheFunction = Builder.GetInsertBlock()->getParent();
+  BasicBlock *PreHeaderBB = Builder.GetInsertBlock();
+  BasicBlock *LoopBB = BasicBlock::Create(TheContext, "loop", TheFunction);
+  //显示的插入当前entry块到loop块的跳转
+  Builder.CreateBr(LoopBB);
+
+  //开始代码插入到Loop块
+  Builder.SetInsertPoint(LoopBB);
+  //循环变量，如果是entry块来的就是start表达式求值结果。否则就是循环块自身跳过来的自增结果的变量
+  PHINode *Variable = Builder.CreatePHI(Type::getDoubleTy(TheContext), 2, VarName.c_str());
+  Variable->addIncoming(StartVal, PreHeaderBB);
+  //为循环主体的代码能够用对符号，所以暂存旧的，然后替换当前的循环变量符号
+  Value *OldVal = NamedValues[VarName];
+  NamedValues[VarName] = Variable;
+  //循环主体代码执行
+  if (!Body->codegen())
+    return nullptr;
+  //执行自增
+  Value *StepVal = nullptr;
+  if (Step)
+  {
+    StepVal = Step->codegen();
+    if (!StepVal)
+      return nullptr;
+  }
+  else
+  {
+    //如果没有指定step语句，默认是1
+    StepVal = ConstantFP::get(TheContext, APFloat(1.0));
+  }
+  Value *NextVar = Builder.CreateFAdd(Variable, StepVal, "nextvar");
+  //执行结束判断表达式的指令
+  Value *EndCond = End->codegen();
+  if (!EndCond)
+    return nullptr;
+  EndCond = Builder.CreateFCmpONE(EndCond, ConstantFP::get(TheContext, APFloat(0.0)), "loopcond");
+  //loopend也是指向loop块
+  BasicBlock *LoopEndBB = Builder.GetInsertBlock();
+  BasicBlock *AfterBB = BasicBlock::Create(TheContext, "afterloop", TheFunction);
+  //判断结束条件，如果结束就跳转到After块
+  Builder.CreateCondBr(EndCond, LoopBB, AfterBB);
+  Builder.SetInsertPoint(AfterBB);
+  //代码生成完，将loopend块添加到PhiNode上
+  Variable->addIncoming(NextVar, LoopEndBB);
+  //执行结束还原全局符号表
+  if (OldVal)
+    NamedValues[VarName] = OldVal;
+  else
+    NamedValues.erase(VarName);
+  //直接返回0
+  return Constant::getNullValue(Type::getDoubleTy(TheContext));
 }
 //===----------------------------------------------------------------------===//
 // Top-Level parsing
