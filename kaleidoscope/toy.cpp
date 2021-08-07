@@ -40,12 +40,15 @@ enum Token
   //primary 基础元素
   tok_identifier = -4,
   tok_number = -5,
-  //control
+  //control 控制流
   tok_if = -6,
   tok_then = -7,
   tok_else = -8,
   tok_for = -9,
-  tok_in = -10
+  tok_in = -10,
+  //operators 操作符
+  tok_binary = -11,
+  tok_unary = -12
 };
 // gettok - 从标准输入中返回下一个token
 static int gettok()
@@ -77,6 +80,10 @@ static int gettok()
       return tok_for;
     if (IdentifierStr == "in")
       return tok_in;
+    if (IdentifierStr == "unary")
+      return tok_unary;
+    if (IdentifierStr == "binary")
+      return tok_binary;
     return tok_identifier;
   }
 
@@ -146,6 +153,16 @@ namespace
     VariableExprAST(const std::string &Name) : Name(Name) {}
     Value *codegen() override;
   };
+  // UnaryExprAST - 一元操作符的表达式
+  class UnaryExprAST : public ExprAST
+  {
+    char Opcode;
+    std::unique_ptr<ExprAST> Operand;
+
+  public:
+    UnaryExprAST(char Opcode, std::unique_ptr<ExprAST> Operand) : Opcode(Opcode), Operand(move(Operand)) {}
+    Value *codegen() override;
+  };
   // BinaryExprAST - 二元操作符表达式节点
   class BinaryExprAST : public ExprAST
   {
@@ -160,24 +177,39 @@ namespace
   class CallExprAST : public ExprAST
   {
     std::string Callee;
-    std::vector<std::unique_ptr<ExprAST>> Args;
+    std::vector<std::unique_ptr<ExprAST> > Args;
 
   public:
-    CallExprAST(const std::string &Callee, std::vector<std::unique_ptr<ExprAST>> Args) : Callee(Callee), Args(move(Args)) {}
+    CallExprAST(const std::string &Callee, std::vector<std::unique_ptr<ExprAST> > Args) : Callee(Callee), Args(move(Args)) {}
     Value *codegen() override;
   };
   // PrototypeAST - 表示函数的原型节点（包含函数自身的信息）
   // 记录了函数的名字和参数名字列表，隐含包含了参数的数量
   // 因为所有参数的数值都是同一个类型double,所以参数的类型不用额外存储
+  // 如果是操作符函数就捕获它的参数名
   class PrototypeAST
   {
     std::string Name;
     std::vector<std::string> Args;
+    bool IsOperator;
+    unsigned Precedence; // 如果是二元操作符，它的优先级
 
   public:
-    PrototypeAST(const std::string &name, std::vector<std::string> Args) : Name(name), Args(move(Args)) {}
+    PrototypeAST(const std::string &name, std::vector<std::string> Args,
+                 bool IsOperator = false, unsigned Prec = 0) : Name(name), Args(move(Args)),
+                                                               IsOperator(IsOperator), Precedence(Prec) {}
     Function *codegen();
     const std::string &getName() { return Name; }
+
+    bool isUnaryOp() const { return IsOperator && Args.size() == 1; }
+    bool isBinaryOp() const { return IsOperator && Args.size() == 2; }
+
+    char getOperatorName() const
+    {
+      assert(isUnaryOp() || isBinaryOp());
+      return Name[Name.size() - 1];
+    }
+    unsigned getBinaryPrecedence() const { return Precedence; }
   };
   // FunctionAST - 表示函数定义节点
   class FunctionAST
@@ -299,7 +331,7 @@ std::unique_ptr<ExprAST> ParseIdentifierExpr()
 
   //说明这个是调用表达式了
   getNextToken(); // eat (
-  std::vector<std::unique_ptr<ExprAST>> Args;
+  std::vector<std::unique_ptr<ExprAST> > Args;
   if (CurTok != ')')
   {
     while (1)
@@ -335,14 +367,29 @@ static int GetTokPrecedence()
     return -1;
   return TokPrec;
 }
-
+// unary
+//    ::= primary
+//    ::= '!' unary
+static std::unique_ptr<ExprAST> ParseUnary()
+{
+  //先将非一元操作符的可能性去掉
+  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',')
+    return ParsePrimary();
+  //处理一元操作符
+  int Opc = CurTok;
+  getNextToken(); //eat 一元符号（因为是用户定义的所以不知道是什么符号）
+  if (auto Operand = ParseUnary())//递归解析可以处理!!x
+    return llvm::make_unique<UnaryExprAST>(Opc, move(Operand));
+  return nullptr;
+}
 // expression ::= primary binoprhs
 // 表达式解析，目前只支持primary和二元操作符的解析
 static std::unique_ptr<ExprAST> ParseExpression()
 {
   //LHS = left hand side
   //RHS = right handle side
-  auto LHS = ParsePrimary();
+  //解析最小单元调整成Unary,因为它包括Primary
+  auto LHS = ParseUnary();
   if (!LHS)
     return nullptr;
 
@@ -361,8 +408,8 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec, std::unique_ptr<Expr
 
     int BinOp = CurTok;
     getNextToken(); // eat 二元操作符
-    //解析后面的primary表达式
-    auto RHS = ParsePrimary();
+    //原来解析单个单元是primary现在调整成一元表达式（因为包括primary）
+    auto RHS = ParseUnary();
     if (!RHS)
       return nullptr;
     //比较当前符号和下个一个右手的符号。如果当前的优先级更高就直接集合成一个LHS节点。否则右侧的优先级更高就继续将右边合并成一个RHS节点
@@ -378,15 +425,55 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec, std::unique_ptr<Expr
     LHS = llvm::make_unique<BinaryExprAST>(BinOp, move(LHS), move(RHS));
   }
 }
-// prototype ::= id '(' id* ')'
+// prototype
+//      ::= id '(' id* ')'
+//      ::= unary LEETER (id)
+//      ::= binary LETTER number? (id, id)
 // 解析函数定义基础元素
 static std::unique_ptr<PrototypeAST> ParsePrototype()
 {
-  if (CurTok != tok_identifier)
-    return LogErrorP("Expected function name in prototype");
+  std::string FnName;
 
-  std::string FnName = IdentifierStr;
-  getNextToken();
+  unsigned Kind = 0; //0=identifier, 1=unary, 2=binary
+  unsigned BinaryPrecedence = 30;
+
+  switch (CurTok)
+  {
+  case tok_identifier:
+    FnName = IdentifierStr;
+    Kind = 0;
+    getNextToken();
+    break;
+  case tok_unary:
+    getNextToken(); //eat unary
+    if (!isascii(CurTok))
+      return LogErrorP("Expected unary operator");
+    FnName = "unary";
+    FnName += (char)CurTok;
+    Kind = 1;
+    getNextToken(); //eat letter
+    break;
+  case tok_binary:
+    getNextToken(); // eat binary
+    if (!isascii(CurTok))
+      return LogErrorP("Expected binary operator");
+    FnName = "binary";
+    FnName += (char)CurTok;
+    Kind = 2;
+    getNextToken(); // eat letter
+
+    //如果优先级存在读取优先级
+    if (CurTok == tok_number)
+    {
+      if (NumVal < 1 || NumVal > 100)
+        return LogErrorP("Invalid precedence: must be 1...100");
+      BinaryPrecedence = (unsigned)NumVal;
+      getNextToken();
+    }
+    break;
+  default:
+    return LogErrorP("Expected function name in prototype");
+  }
 
   if (CurTok != '(')
     return LogErrorP("Expected '(' in prototype");
@@ -399,7 +486,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype()
     return LogErrorP("Expected ')' in prototype");
 
   getNextToken(); //eat ')'
-  return llvm::make_unique<PrototypeAST>(FnName, move(ArgNames));
+  return llvm::make_unique<PrototypeAST>(FnName, move(ArgNames), Kind != 0, BinaryPrecedence);
 }
 // ifexpr ::= 'if' expression 'then' expression 'else' expression
 static std::unique_ptr<ExprAST> ParseIfExpr()
@@ -524,7 +611,20 @@ static std::unique_ptr<Module> TheModule;                   //存储代码段中
 static std::map<std::string, Value *> NamedValues;          //用于记录当前解析AST过程中遇到的作用域内的变量，相当于符号表。目前主要是函数的参数
 static std::unique_ptr<legacy::FunctionPassManager> TheFPM; //优化通道管理器
 static std::unique_ptr<KaleidoscopeJIT> TheJIT;
-static std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
+static std::map<std::string, std::unique_ptr<PrototypeAST> > FunctionProtos;
+Function *getFunction(std::string Name)
+{
+  //首先，如果这个函数名以及被定义到这个模块中
+  if (auto *F = TheModule->getFunction(Name))
+    return F;
+  //如果没有，检查我们是否可以从以及存在的函数prototype中生成代码
+  auto FI = FunctionProtos.find(Name);
+  if (FI != FunctionProtos.end())
+    return FI->second->codegen();
+
+  //如果不存在原型，返回null
+  return nullptr;
+}
 Value *LogErrorV(const char *Str)
 {
   LogError(Str);
@@ -544,6 +644,17 @@ Value *VariableExprAST::codegen()
   if (!V)
     LogErrorV("Unknow variable name");
   return V;
+}
+Value *UnaryExprAST::codegen()
+{
+  Value *OperandV = Operand->codegen();
+  if (!OperandV)
+    return nullptr;
+  Function *F = getFunction(std::string("unary") + Opcode);
+  if (!F)
+    return LogErrorV("Unknow unary operator");
+
+  return Builder.CreateCall(F, OperandV, "upop");
 }
 Value *BinaryExprAST::codegen()
 {
@@ -567,21 +678,14 @@ Value *BinaryExprAST::codegen()
     //需要通过下面的指令将0/1 bool值转成 0.0/1.0的double值
     return Builder.CreateUIToFP(L, Type::getDoubleTy(TheContext), "booltmp");
   default:
-    return LogErrorV("invalid binary operator");
+    break;
   }
-}
-Function *getFunction(std::string Name)
-{
-  //首先，如果这个函数名以及被定义到这个模块中
-  if (auto *F = TheModule->getFunction(Name))
-    return F;
-  //如果没有，检查我们是否可以从以及存在的函数prototype中生成代码
-  auto FI = FunctionProtos.find(Name);
-  if (FI != FunctionProtos.end())
-    return FI->second->codegen();
+  //如果不存在内置的二元操作符，一定是用户自定义的。生成调用用户定义函数
+  Function *F = getFunction(std::string("binary") + Op);
+  assert(F && "binary operator not found!");
 
-  //如果不存在原型，返回null
-  return nullptr;
+  Value *Ops[2] = {L, R};
+  return Builder.CreateCall(F, Ops, "binop");
 }
 Value *CallExprAST::codegen()
 {
@@ -641,6 +745,9 @@ Function *FunctionAST::codegen()
   //这就说明代码存在函数重复定义，报错
   if (!TheFunction->empty())
     return (Function *)LogErrorV("Function cannot be redefined.");
+
+  if (P.isBinaryOp())
+    BinopPrecedence[P.getOperatorName()] = P.getBinaryPrecedence();
 
   //创建一个新的基础代码块插入到指定函数的末尾
   BasicBlock *BB = BasicBlock::Create(TheContext, "entry", TheFunction);
@@ -880,7 +987,7 @@ static void HandleTopLevelExpression()
   else
     getNextToken(); //如果解析失败，跳过错误的token
 }
-// top ::= definition | externl | expression | ';'
+// top ::= definition | extern | expression | ';'
 static void MainLoop()
 {
   while (1)
