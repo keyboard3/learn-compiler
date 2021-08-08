@@ -7,3 +7,7 @@
 */toy*
 .vscode/settings.json
 */build/*
+*/average*
+*/fib*
+*/*-toy
+*/*.dSYM
