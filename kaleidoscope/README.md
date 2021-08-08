@@ -14,20 +14,16 @@ cmake —build . --target install
 ```
 make jit
 ./jit-toy
+//ready> def average(x y) (x + y) * 0.5;
 ```
 - 解释输出目标文件
 ```
-make
-./compiler-toy
-
-//ready> def average(x y) (x + y) * 0.5;
-//^D
-//Wrote output.o
+make  && ./compiler-toy < average.ks && make average
 ```
-- 运行目标文件测试
+- debug fib函数
 ```
-make test
-//average of 3.0 and 4.0: 3.5
+make debug && ./debug-toy < fib.ks 2>&1 | llc - -filetype=obj -o output.o && make fib
+//然后用vscode的lldb就可以进入fib.ks进行debug了
 ```
 ## 进度
  - 词法分析
@@ -65,3 +61,4 @@ make test
    - 新赋值操作符
    - 用户定义局部变量
 - 编译目标文件
+- 添加Debug信息
