@@ -48,7 +48,9 @@ enum Token
   tok_in = -10,
   //operators 操作符
   tok_binary = -11,
-  tok_unary = -12
+  tok_unary = -12,
+  //var 定义
+  tok_var = -13
 };
 // gettok - 从标准输入中返回下一个token
 static int gettok()
@@ -84,6 +86,8 @@ static int gettok()
       return tok_unary;
     if (IdentifierStr == "binary")
       return tok_binary;
+    if (IdentifierStr == "var")
+      return tok_var;
     return tok_identifier;
   }
 
@@ -144,13 +148,29 @@ namespace
     NumberExprAST(double Val) : Val(Val) {}
     virtual Value *codegen() override;
   };
-  // VariableExprAST - 变量节表达式点 比如 "a"
+  // VariableExprAST - 变量访问表达式 比如 "a"
   class VariableExprAST : public ExprAST
   {
     std::string Name;
 
   public:
     VariableExprAST(const std::string &Name) : Name(Name) {}
+    Value *codegen() override;
+    std::string getName()
+    {
+      return Name;
+    }
+  };
+  // VarExprAST - 变量声明表达式
+  class VarExprAST : public ExprAST
+  {
+    std::vector<std::pair<std::string, std::unique_ptr<ExprAST> > > VarNames;
+    std::unique_ptr<ExprAST> Body;
+
+  public:
+    VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST> > > VarNames,
+               std::unique_ptr<ExprAST> Body)
+        : VarNames(std::move(VarNames)), Body(std::move(Body)) {}
     Value *codegen() override;
   };
   // UnaryExprAST - 一元操作符的表达式
@@ -274,6 +294,7 @@ static std::unique_ptr<ExprAST> ParseParenExpr();
 static std::unique_ptr<ExprAST> ParseIdentifierExpr();
 static std::unique_ptr<ExprAST> ParseIfExpr();
 static std::unique_ptr<ExprAST> ParseForExpr();
+static std::unique_ptr<ExprAST> ParseVarExpr();
 
 // 最基础的元素如数据等
 // primary
@@ -281,6 +302,8 @@ static std::unique_ptr<ExprAST> ParseForExpr();
 //   ::= numberexpr
 //   ::= parenexpr
 //   ::= ifexpr
+//   ::= forexpr
+//   ::= varexpr
 std::unique_ptr<ExprAST> ParsePrimary()
 {
   switch (CurTok)
@@ -297,6 +320,8 @@ std::unique_ptr<ExprAST> ParsePrimary()
     return ParseIfExpr();
   case tok_for:
     return ParseForExpr();
+  case tok_var:
+    return ParseVarExpr();
   }
 }
 // 解析数字字面量表达式 numberexper ::= number
@@ -353,6 +378,50 @@ std::unique_ptr<ExprAST> ParseIdentifierExpr()
   getNextToken();
   return llvm::make_unique<CallExprAST>(IdName, move(Args));
 }
+// varexpr ::= 'var' identifier ('=' expression)?
+//                   (',' identifier ('=' expression)?*)* 'in' expression
+static std::unique_ptr<ExprAST> ParseVarExpr()
+{
+  getNextToken(); // eat var
+  std::vector<std::pair<std::string, std::unique_ptr<ExprAST> > > VarNames;
+
+  //至少有一个变量名声明
+  if (CurTok != tok_identifier)
+    return LogError("expected identifier after var");
+
+  while (true)
+  {
+    std::string Name = IdentifierStr;
+    getNextToken(); //eat identifier
+
+    //读取可选的初始化
+    std::unique_ptr<ExprAST> Init = nullptr;
+    if (CurTok == '=')
+    {
+      getNextToken(); //eat the '='
+
+      Init = ParseExpression();
+      if (!Init)
+        return nullptr;
+    }
+    VarNames.push_back(std::make_pair(Name, move(Init)));
+    //如果是到了变量声明的末尾，就退出循环
+    if (CurTok != ',')
+      break;
+    getNextToken(); // eat ','
+    if (CurTok != tok_identifier)
+      return LogError("expected identifier list after var");
+  }
+
+  if (CurTok != tok_in)
+    return LogError("expected 'in' keyword after 'var'");
+  getNextToken(); // eat 'in'
+  auto Body = ParseExpression();
+  if (!Body)
+    return nullptr;
+
+  return llvm::make_unique<VarExprAST>(move(VarNames), move(Body));
+}
 // BinopPrecedence - 定义了每个二元操作符的优先级
 // 数值越高，优先级越高
 static std::map<char, int> BinopPrecedence;
@@ -377,8 +446,8 @@ static std::unique_ptr<ExprAST> ParseUnary()
     return ParsePrimary();
   //处理一元操作符
   int Opc = CurTok;
-  getNextToken(); //eat 一元符号（因为是用户定义的所以不知道是什么符号）
-  if (auto Operand = ParseUnary())//递归解析可以处理!!x
+  getNextToken();                  //eat 一元符号（因为是用户定义的所以不知道是什么符号）
+  if (auto Operand = ParseUnary()) //递归解析可以处理!!x
     return llvm::make_unique<UnaryExprAST>(Opc, move(Operand));
   return nullptr;
 }
@@ -608,7 +677,7 @@ static std::unique_ptr<FunctionAST> ParseTopLevelExpr()
 static LLVMContext TheContext;                              //保存了llvm构建的核心数据结构，包括常量池等
 static IRBuilder<> Builder(TheContext);                     //简化指令生成的辅助对象，IRBuilder类模板可有用于跟踪当前指令的插入位置，还带有生成新指令的方法
 static std::unique_ptr<Module> TheModule;                   //存储代码段中所有函数和全局变量
-static std::map<std::string, Value *> NamedValues;          //用于记录当前解析AST过程中遇到的作用域内的变量，相当于符号表。目前主要是函数的参数
+static std::map<std::string, AllocaInst *> NamedValues;     //用于记录当前解析AST过程中遇到的作用域内的变量，相当于符号表。目前主要是函数的参数
 static std::unique_ptr<legacy::FunctionPassManager> TheFPM; //优化通道管理器
 static std::unique_ptr<KaleidoscopeJIT> TheJIT;
 static std::map<std::string, std::unique_ptr<PrototypeAST> > FunctionProtos;
@@ -630,7 +699,12 @@ Value *LogErrorV(const char *Str)
   LogError(Str);
   return nullptr;
 }
-
+//在函数的入口处创建内存的变量空间
+static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, const std::string &VarName)
+{
+  IRBuilder<> TempB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
+  return TempB.CreateAlloca(Type::getDoubleTy(TheContext), 0, VarName.c_str());
+}
 Value *NumberExprAST::codegen()
 {
   //APFloat (Arbitrary Precision Float 可用于存储任意精度的浮点数常量)
@@ -639,11 +713,49 @@ Value *NumberExprAST::codegen()
 }
 Value *VariableExprAST::codegen()
 {
-  //在函数中查找这个变量，目前可以认为所有变量都已经被提前定义好，都是函数调用传参的符号
-  Value *V = NamedValues[Name];
-  if (!V)
+  //通过源代码中的变量名找到IR中的指向的内存空间
+  AllocaInst *A = NamedValues[Name];
+  if (!A)
     LogErrorV("Unknow variable name");
-  return V;
+  //通过这个内存空间加载到IR的符号上
+  return Builder.CreateLoad(A->getAllocatedType(), A, Name.c_str());
+}
+Value *VarExprAST::codegen()
+{
+  std::vector<AllocaInst *> OldBindings;
+  Function *TheFunction = Builder.GetInsertBlock()->getParent();
+  //注册所有变量到NamedValues
+  for (unsigned i = 0, e = VarNames.size(); i != e; ++i)
+  {
+    //在添加到变量之前就完成初始化，为了处理掉初始化过程中引用自己的问题
+    // var a=1 in
+    // var a=a in .. //这里初始化a指向了外面那一个
+    const std::string &VarName = VarNames[i].first;
+    ExprAST *Init = VarNames[i].second.get();
+
+    Value *InitVal;
+    if (Init)
+    {
+      InitVal = Init->codegen();
+      if (!InitVal)
+        return nullptr;
+    }
+    else
+      InitVal = ConstantFP::get(TheContext, APFloat(0.0));
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName);
+    Builder.CreateStore(InitVal, Alloca);
+    //记住之前的同名的变量，当body执行完，将旧变量还原
+    OldBindings.push_back(NamedValues[VarName]);
+    NamedValues[VarName] = Alloca;
+  }
+  //生成body代码，所有变量的解析都会走NamedValues
+  Value *BodyVal = Body->codegen();
+  if (!BodyVal)
+    return nullptr;
+
+  for (unsigned i = 0, e = VarNames.size(); i != e; ++i)
+    NamedValues[VarNames[i].first] = OldBindings[i];
+  return BodyVal;
 }
 Value *UnaryExprAST::codegen()
 {
@@ -658,6 +770,26 @@ Value *UnaryExprAST::codegen()
 }
 Value *BinaryExprAST::codegen()
 {
+  //因为我们不想要左边作为表达式，所以要特殊处理=
+  if (Op == '=')
+  {
+    //赋值语句要求左边是标识符
+    VariableExprAST *LHSE = static_cast<VariableExprAST *>(LHS.get());
+    if (!LHSE)
+      return LogErrorV("destination of '=' must be a variable");
+    //求值右边表达式
+    Value *Val = RHS->codegen();
+    if (!Val)
+      return nullptr;
+    //找到左边的变量
+    AllocaInst *Variable = NamedValues[LHSE->getName()];
+    if (!Variable)
+      return LogErrorV("Unknow variable name");
+    //赋值
+    Builder.CreateStore(Val, Variable);
+    return Val;
+  }
+
   Value *L = LHS->codegen();
   Value *R = RHS->codegen();
   if (!L || !R)
@@ -757,7 +889,14 @@ Function *FunctionAST::codegen()
   //记录函数参数到 NameValues 中，为了后面生成函数体内变量的访问指令
   NamedValues.clear();
   for (auto &Arg : TheFunction->args())
-    NamedValues[std::string(Arg.getName())] = &Arg;
+  {
+    //为每个参数都创建内存的空间，可以被修改
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName());
+    //载入它们的初始值
+    Builder.CreateStore(&Arg, Alloca);
+    //添加参数到变量的符号表中
+    NamedValues[Arg.getName()] = Alloca;
+  }
 
   //函数体的指令会填充到上面创建的entry代码块中
   if (Value *RetVal = Body->codegen())
@@ -828,37 +967,30 @@ Value *IfExprAST::codegen()
 }
 /**
  * for i=1,i<n,1.0 in putchard(42);
- * entry: 
- *  ->loop
- * loop: entry->i=1,loop->nextVar
- *  [body] %calltmp = call double @putchard(double 42)
- *  [increment] nextVar = fadd i
- *  [termination] %loopcond = fcmp one %booltmp
- *  br i1 %loopcond ? %loop label : %afterloop label
- * afterloop:
- *  return 0;
+ * 实际就是块和块之间的跳转
 */
 Value *ForExprAST::codegen()
 {
+  Function *TheFunction = Builder.GetInsertBlock()->getParent();
+  //创建初始循环变量空间
+  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName);
+
   //Start表达式代码生成
   Value *StartVal = Start->codegen();
   if (!StartVal)
     return nullptr;
+  //将初始值存储到该变量空间上
+  Builder.CreateStore(StartVal, Alloca);
   //为循环头新增一个基础块
-  Function *TheFunction = Builder.GetInsertBlock()->getParent();
-  BasicBlock *PreHeaderBB = Builder.GetInsertBlock();
   BasicBlock *LoopBB = BasicBlock::Create(TheContext, "loop", TheFunction);
   //显示的插入当前entry块到loop块的跳转
   Builder.CreateBr(LoopBB);
 
   //开始代码插入到Loop块
   Builder.SetInsertPoint(LoopBB);
-  //循环变量，如果是entry块来的就是start表达式求值结果。否则就是循环块自身跳过来的自增结果的变量
-  PHINode *Variable = Builder.CreatePHI(Type::getDoubleTy(TheContext), 2, VarName.c_str());
-  Variable->addIncoming(StartVal, PreHeaderBB);
   //为循环主体的代码能够用对符号，所以暂存旧的，然后替换当前的循环变量符号
-  Value *OldVal = NamedValues[VarName];
-  NamedValues[VarName] = Variable;
+  AllocaInst *OldVal = NamedValues[VarName];
+  NamedValues[VarName] = Alloca;
   //循环主体代码执行
   if (!Body->codegen())
     return nullptr;
@@ -875,20 +1007,20 @@ Value *ForExprAST::codegen()
     //如果没有指定step语句，默认是1
     StepVal = ConstantFP::get(TheContext, APFloat(1.0));
   }
-  Value *NextVar = Builder.CreateFAdd(Variable, StepVal, "nextvar");
   //执行结束判断表达式的指令
   Value *EndCond = End->codegen();
   if (!EndCond)
     return nullptr;
+  //将step增加的结果存储回变量的内存空间
+  Value *CurVar = Builder.CreateLoad(Alloca->getAllocatedType(), Alloca, VarName.c_str());
+  Value *NextVar = Builder.CreateFAdd(CurVar, StepVal, "nextvar");
+  Builder.CreateStore(NextVar, Alloca);
+
   EndCond = Builder.CreateFCmpONE(EndCond, ConstantFP::get(TheContext, APFloat(0.0)), "loopcond");
-  //loopend也是指向loop块
-  BasicBlock *LoopEndBB = Builder.GetInsertBlock();
   BasicBlock *AfterBB = BasicBlock::Create(TheContext, "afterloop", TheFunction);
   //判断结束条件，如果结束就跳转到After块
   Builder.CreateCondBr(EndCond, LoopBB, AfterBB);
   Builder.SetInsertPoint(AfterBB);
-  //代码生成完，将loopend块添加到PhiNode上
-  Variable->addIncoming(NextVar, LoopEndBB);
   //执行结束还原全局符号表
   if (OldVal)
     NamedValues[VarName] = OldVal;
@@ -908,12 +1040,14 @@ static void InitializeModuleAndPassManager()
 
   //创建一个新的通道管理，并添加给Module
   TheFPM = llvm::make_unique<legacy::FunctionPassManager>(TheModule.get());
+  //将alloca提升到寄存器
+  // TheFPM->add(createPromoteMemoryToRegisterPass());
   //做简单的peephole优化以及位处理optzns
-  TheFPM->add(createInstructionCombiningPass());
+  // TheFPM->add(createInstructionCombiningPass());
   //重新关联表达式
-  TheFPM->add(createReassociatePass());
+  // TheFPM->add(createReassociatePass());
   //消除公共子表达式
-  TheFPM->add(createGVNPass());
+  // TheFPM->add(createGVNPass());
   //简化控制流图(删除无法触达的代码块等)
   // TheFPM->add(createCFGSimplificationPass());
 
@@ -1043,6 +1177,7 @@ int main()
 
   // 准备二元操作符优先级
   // 1 是最小的优先级.
+  BinopPrecedence['='] = 2;
   BinopPrecedence['<'] = 10;
   BinopPrecedence['+'] = 20;
   BinopPrecedence['-'] = 20;
