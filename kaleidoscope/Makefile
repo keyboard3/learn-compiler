@@ -1,17 +1,8 @@
-TARGET = toy
-LIBS = $(shell llvm-config --ldflags --system-libs --libs core mcjit native)
-INCLUDE = $(shell llvm-config --cxxflags)
+all:
+	clang++ -g -O3 toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs all` -o compiler-toy
 
-all : $(TARGET)
+jit:
+	clang++ -g jit-toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core orcjit native` -O3 -o jit-toy
 
-$(TARGET) : toy.cpp
-	g++ -g -std=c++1z toy.cpp $(INCLUDE) $(LIBS) -O3 -o $(TARGET)
-
-run :
-	./$(TARGET)
-
-clean :
-	rm -f $(TARGET)
-
-prepare:
-	brew install llvm
+test:
+	clang++ main.cpp output.o -o main && ./main

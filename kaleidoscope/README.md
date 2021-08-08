@@ -10,10 +10,24 @@ cd llvm-project && cd llvm && mkdir build && cd build
 cmake ..
 cmake —build . --target install
 ```
-- 解释运行
+- JIT解释运行
+```
+make jit
+./jit-toy
+```
+- 解释输出目标文件
 ```
 make
-./toy
+./compiler-toy
+
+//ready> def average(x y) (x + y) * 0.5;
+//^D
+//Wrote output.o
+```
+- 运行目标文件测试
+```
+make test
+//average of 3.0 and 4.0: 3.5
 ```
 ## 进度
  - 词法分析
@@ -50,3 +64,4 @@ make
    - 将语言内部的变量调整为可变变量
    - 新赋值操作符
    - 用户定义局部变量
+- 编译目标文件

@@ -1,31 +1,28 @@
+#include "./include/KaleidoscopeJIT.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Analysis/Passes.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
-#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetOptions.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"
-#include <cctype>
-#include <cstdio>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
+#include "llvm/Transforms/Scalar/GVN.h"
+#include "cassert"
+#include "algorithm"
+#include "string"
+#include "vector"
+#include "map"
 using namespace llvm;
-using namespace llvm::sys;
+using namespace llvm::orc;
 
 //===----------------------------------------------------------------------===//
 // Lexer
@@ -677,10 +674,12 @@ static std::unique_ptr<FunctionAST> ParseTopLevelExpr()
  * y :=2 => y2:=2
  * x :=y    x1:=y2
  **/
-static LLVMContext TheContext;                          //保存了llvm构建的核心数据结构，包括常量池等
-static IRBuilder<> Builder(TheContext);                 //简化指令生成的辅助对象，IRBuilder类模板可有用于跟踪当前指令的插入位置，还带有生成新指令的方法
-static std::unique_ptr<Module> TheModule;               //存储代码段中所有函数和全局变量
-static std::map<std::string, AllocaInst *> NamedValues; //用于记录当前解析AST过程中遇到的作用域内的变量，相当于符号表。目前主要是函数的参数
+static LLVMContext TheContext;                              //保存了llvm构建的核心数据结构，包括常量池等
+static IRBuilder<> Builder(TheContext);                     //简化指令生成的辅助对象，IRBuilder类模板可有用于跟踪当前指令的插入位置，还带有生成新指令的方法
+static std::unique_ptr<Module> TheModule;                   //存储代码段中所有函数和全局变量
+static std::map<std::string, AllocaInst *> NamedValues;     //用于记录当前解析AST过程中遇到的作用域内的变量，相当于符号表。目前主要是函数的参数
+static std::unique_ptr<legacy::FunctionPassManager> TheFPM; //优化通道管理器
+static std::unique_ptr<KaleidoscopeJIT> TheJIT;
 static std::map<std::string, std::unique_ptr<PrototypeAST> > FunctionProtos;
 Function *getFunction(std::string Name)
 {
@@ -908,6 +907,9 @@ Function *FunctionAST::codegen()
     //验证生成的代码，检查一致性，保证编译的代码能够被正确执行
     verifyFunction(*TheFunction);
 
+    //在返回之前优化函数代码
+    TheFPM->run(*TheFunction);
+
     return TheFunction;
   }
   //出错，就从父模块中删除它
@@ -1034,6 +1036,22 @@ static void InitializeModuleAndPassManager()
 {
   //创建一个新的module
   TheModule = llvm::make_unique<Module>("my cool jit", TheContext);
+  TheModule->setDataLayout(TheJIT->getTargetMachine().createDataLayout());
+
+  //创建一个新的通道管理，并添加给Module
+  TheFPM = llvm::make_unique<legacy::FunctionPassManager>(TheModule.get());
+  //将alloca提升到寄存器
+  // TheFPM->add(createPromoteMemoryToRegisterPass());
+  //做简单的peephole优化以及位处理optzns
+  // TheFPM->add(createInstructionCombiningPass());
+  //重新关联表达式
+  // TheFPM->add(createReassociatePass());
+  //消除公共子表达式
+  // TheFPM->add(createGVNPass());
+  //简化控制流图(删除无法触达的代码块等)
+  // TheFPM->add(createCFGSimplificationPass());
+
+  TheFPM->doInitialization();
 }
 
 static void HandleDefinition()
@@ -1042,14 +1060,18 @@ static void HandleDefinition()
   {
     if (auto *FnIR = FnAST->codegen())
     {
-      fprintf(stderr, "Read function definition:");
-      FnIR->dump();
+      fprintf(stderr, "Read function definition:\n");
+      FnIR->print(errs());
+      fprintf(stderr, "\n");
+      //即时编译当前函数定义的模块
+      TheJIT->addModule(std::move(TheModule));
+      //并创建一个新的模块
+      InitializeModuleAndPassManager();
     }
   }
   else
     getNextToken(); //如果解析失败，跳过错误的token
 }
-
 static void HandleExtern()
 {
   if (auto ProtoAST = ParseExtern())
@@ -1057,19 +1079,45 @@ static void HandleExtern()
     if (auto *FnIR = ProtoAST->codegen())
     {
       fprintf(stderr, "Read extern: \n");
-      FnIR->dump();
+      FnIR->print(errs());
+      fprintf(stderr, "\n");
+      //将这个函数名的函数原型AST保存起来，函数调用表达式在生成IR代码的时候会检查它，然后生成调用指令。
+      //因为没有将这个模块添加到JIT，所以JIT在查找符号的时候从模块中找不到会从进程中找
       FunctionProtos[ProtoAST->getName()] = std::move(ProtoAST);
     }
   }
   else
     getNextToken(); //如果解析失败，跳过错误的token
 }
-
 static void HandleTopLevelExpression()
 {
-  // Evaluate a top-level expression into an anonymous function.
+  //解析顶层表达式到匿名函数中
   if (auto FnAST = ParseTopLevelExpr())
-    FnAST->codegen();
+  {
+    if (auto *FnIR = FnAST->codegen())
+    {
+      fprintf(stderr, "Read top-level expression:\n");
+      FnIR->print(errs());
+      fprintf(stderr, "\n");
+
+      //及时编译这个模块包含的匿名表达式，持有这个handle,稍后我们会释放它
+      //addModule会触发这个模块下的所有函数代码生成，返回handle可以被移除
+      auto H = TheJIT->addModule(std::move(TheModule));
+      //一旦Module添加到JIT就不能修改。所以需要调用来创建一个新的模块保存后续代码
+      InitializeModuleAndPassManager();
+
+      //在JIT中搜索这个__anon_expr符号。获取到指向刚刚生成代码的指针
+      auto ExprSymbol = TheJIT->findSymbol("__anon_expr");
+      assert(ExprSymbol && "Function not found");
+
+      //获得符号地址并转成正确的函数类型(没参数，返回double)，所以我们可以把它作为原生函数调用
+      double (*FP)() = (double (*)())(intptr_t)ExprSymbol.getAddress();
+      fprintf(stderr, "Evaluated to %f\n", FP());
+
+      //因为我们不支持重新定义顶层表达式，所以需要执行完毕删除，下次创建新的
+      TheJIT->removeModule(H);
+    }
+  }
   else
     getNextToken(); //如果解析失败，跳过错误的token
 }
@@ -1119,8 +1167,13 @@ extern "C" double printd(double X)
 //===----------------------------------------------------------------------===//
 // Main driver code.
 //===----------------------------------------------------------------------===//
+
 int main()
 {
+  InitializeNativeTarget();
+  InitializeNativeTargetAsmPrinter();
+  InitializeNativeTargetAsmParser();
+
   // 准备二元操作符优先级
   // 1 是最小的优先级.
   BinopPrecedence['='] = 2;
@@ -1133,64 +1186,15 @@ int main()
   fprintf(stderr, "ready> ");
   getNextToken();
 
+  TheJIT = llvm::make_unique<KaleidoscopeJIT>();
+
   InitializeModuleAndPassManager();
 
   //运行解析执行循环
   MainLoop();
 
-  // Initialize the target registry etc.
-  InitializeAllTargetInfos();
-  InitializeAllTargets();
-  InitializeAllTargetMCs();
-  InitializeAllAsmParsers();
-  InitializeAllAsmPrinters();
-  //target triple形式：<arch><sub>-<vendor>-<sys>-<abi>
-  auto TargetTriple = sys::getDefaultTargetTriple();
-  TheModule->setTargetTriple(TargetTriple);
-
-  std::string Error;
-  auto Target = TargetRegistry::lookupTarget(TargetTriple, Error);
-
-  // Print an error and exit if we couldn't find the requested target.
-  // This generally occurs if we've forgotten to initialise the
-  // TargetRegistry or we have a bogus target triple.
-  if (!Target)
-  {
-    errs() << Error;
-    return 1;
-  }
-
-  auto CPU = "generic";
-  auto Features = "";
-  TargetOptions opt;
-  auto RM = Optional<Reloc::Model>();
-  //TargetMachine提供了完整的目标机器的描述
-  auto TheTargetMachine =
-      Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
-
-  TheModule->setDataLayout(TheTargetMachine->createDataLayout());
-
-  auto Filename = "output.o";
-  std::error_code EC;
-  raw_fd_ostream dest(Filename, EC, sys::fs::F_None);
-
-  if (EC)
-  {
-    errs() << "Could not open file: " << EC.message();
-    return 1;
-  }
-  //优化指令
-  legacy::PassManager pass;
-  auto FileType = TargetMachine::CGFT_ObjectFile;
-  if (TheTargetMachine->addPassesToEmitFile(pass, dest, FileType))
-  {
-    errs() << "TheTargetMachine can't emit a file of this type";
-    return 1;
-  }
-  //输出编译的目标文件
-  pass.run(*TheModule);
-  dest.flush();
-  outs() << "Wrote " << Filename << "\n";
+  // 打印所有生成的代码
+  TheModule->print(errs(), nullptr);
 
   return 0;
 }
