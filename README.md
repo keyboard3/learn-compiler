@@ -5,7 +5,7 @@
 
 
 ## JS 一览
-建议阅读 [JavaScript 20年](cn.history.js.org)
+建议阅读 [JavaScript 20年](https://cn.history.js.org)
 | 版本   | 实现(参考)                                           |
 | ------ | ---------------------------------------------------- |
 | [ES 1.0](https://www.ecma-international.org/wp-content/uploads/ECMA-262_1st_edition_june_1997.pdf) | [macha(JavaScript-1.1)](https://github.com/doodlewind/mocha1995) |
